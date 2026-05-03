@@ -33,10 +33,14 @@ export const Route = createRootRoute({
       { title: "RAP GUESSER — zgaduj polskie rapowe tracki" },
       { name: "description", content: "Codzienne wyzwanie i nieskończony tryb. Zgaduj utwory polskiego rapu po krótkich samplach." },
       { name: "author", content: "RAP GUESSER" },
-      { property: "og:title", content: "RAP GUESSER" },
-      { property: "og:description", content: "Zgadnij polski rap z 0.5 sekundy." },
+      { property: "og:title", content: "RAP GUESSER — zgaduj polskie rapowe tracki" },
+      { property: "og:description", content: "Codzienne wyzwanie i nieskończony tryb. Zgaduj utwory polskiego rapu po krótkich samplach." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "RAP GUESSER — zgaduj polskie rapowe tracki" },
+      { name: "twitter:description", content: "Codzienne wyzwanie i nieskończony tryb. Zgaduj utwory polskiego rapu po krótkich samplach." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c92a0969-b41b-4fb4-af44-104ce739e8e3" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c92a0969-b41b-4fb4-af44-104ce739e8e3" },
     ],
     links: [
       {
