@@ -66,7 +66,7 @@ export async function loadYtAlbums(): Promise<void> {
   if (typeof window === "undefined") return;
   const { data, error } = await supabase
     .from("yt_albums")
-    .select("id, cover_url, artist, title, year, yt_album_tracks(id, video_id, artist, title, position)")
+    .select("id, cover_url, artist, title, year, recommended, yt_album_tracks(id, video_id, artist, title, position)")
     .order("created_at", { ascending: false });
   if (error || !data) return;
   const next: Album[] = data.map((a: any) => {
@@ -88,6 +88,7 @@ export async function loadYtAlbums(): Promise<void> {
       year: a.year ?? 0,
       cover: a.cover_url,
       songs: tracks,
+      recommended: !!a.recommended,
     };
   });
   albumsCache = next;
