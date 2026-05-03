@@ -58,3 +58,59 @@ export const deleteYtTrack = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ============= ALBUMY =============
+
+const AlbumTrackSchema = z.object({
+  link: z.string().min(1).max(500),
+  artist: z.string().min(1).max(200),
+  title: z.string().min(1).max(200),
+});
+
+const AddAlbumSchema = PwSchema.extend({
+  cover_url: z.string().url().max(1000),
+  artist: z.string().min(1).max(200),
+  title: z.string().min(1).max(200),
+  year: z.number().int().min(1900).max(2100).optional().nullable(),
+  tracks: z.array(AlbumTrackSchema).min(1).max(100),
+});
+
+export const addYtAlbum = createServerFn({ method: "POST" })
+  .inputValidator((d) => AddAlbumSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    // Walidacja linków
+    const trackRows = data.tracks.map((t, i) => {
+      const vid = extractVideoId(t.link);
+      if (!vid) throw new Error(`Niepoprawny link YouTube w tracku #${i + 1}`);
+      return { video_id: vid, artist: t.artist.trim(), title: t.title.trim(), position: i };
+    });
+    const { data: album, error: aErr } = await supabaseAdmin
+      .from("yt_albums")
+      .insert({
+        cover_url: data.cover_url.trim(),
+        artist: data.artist.trim(),
+        title: data.title.trim(),
+        year: data.year ?? null,
+      })
+      .select()
+      .single();
+    if (aErr || !album) throw new Error(aErr?.message ?? "Błąd tworzenia albumu");
+    const { error: tErr } = await supabaseAdmin
+      .from("yt_album_tracks")
+      .insert(trackRows.map((r) => ({ ...r, album_id: album.id })));
+    if (tErr) {
+      await supabaseAdmin.from("yt_albums").delete().eq("id", album.id);
+      throw new Error(tErr.message);
+    }
+    return album;
+  });
+
+export const deleteYtAlbum = createServerFn({ method: "POST" })
+  .inputValidator((d) => DelSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const { error } = await supabaseAdmin.from("yt_albums").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
