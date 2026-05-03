@@ -114,3 +114,43 @@ export const deleteYtAlbum = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const UpdateAlbumSchema = PwSchema.extend({
+  id: z.string().uuid(),
+  cover_url: z.string().url().max(1000),
+  artist: z.string().min(1).max(200),
+  title: z.string().min(1).max(200),
+  year: z.number().int().min(1900).max(2100).optional().nullable(),
+  tracks: z.array(AlbumTrackSchema).min(1).max(100),
+});
+
+export const updateYtAlbum = createServerFn({ method: "POST" })
+  .inputValidator((d) => UpdateAlbumSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const trackRows = data.tracks.map((t, i) => {
+      const vid = extractVideoId(t.link);
+      if (!vid) throw new Error(`Niepoprawny link YouTube w tracku #${i + 1}`);
+      return { video_id: vid, artist: t.artist.trim(), title: t.title.trim(), position: i };
+    });
+    const { error: uErr } = await supabaseAdmin
+      .from("yt_albums")
+      .update({
+        cover_url: data.cover_url.trim(),
+        artist: data.artist.trim(),
+        title: data.title.trim(),
+        year: data.year ?? null,
+      })
+      .eq("id", data.id);
+    if (uErr) throw new Error(uErr.message);
+    const { error: dErr } = await supabaseAdmin
+      .from("yt_album_tracks")
+      .delete()
+      .eq("album_id", data.id);
+    if (dErr) throw new Error(dErr.message);
+    const { error: tErr } = await supabaseAdmin
+      .from("yt_album_tracks")
+      .insert(trackRows.map((r) => ({ ...r, album_id: data.id })));
+    if (tErr) throw new Error(tErr.message);
+    return { ok: true };
+  });
