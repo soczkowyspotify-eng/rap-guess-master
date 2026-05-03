@@ -59,6 +59,27 @@ export const deleteYtTrack = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const UpdateTrackSchema = PwSchema.extend({
+  id: z.string().uuid(),
+  link: z.string().min(1).max(500),
+  artist: z.string().min(1).max(200),
+  title: z.string().min(1).max(200),
+});
+
+export const updateYtTrack = createServerFn({ method: "POST" })
+  .inputValidator((d) => UpdateTrackSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const videoId = extractVideoId(data.link);
+    if (!videoId) throw new Error("Niepoprawny link YouTube");
+    const { error } = await supabaseAdmin
+      .from("yt_tracks")
+      .update({ video_id: videoId, artist: data.artist.trim(), title: data.title.trim() })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 // ============= ALBUMY =============
 
 const AlbumTrackSchema = z.object({
