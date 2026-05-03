@@ -13,13 +13,23 @@ export const DIFFICULTY: Record<Difficulty, { durations: number[]; attempts: num
 export type Mode = "daily" | "endless" | "album";
 
 export function allSongs(): Song[] {
-  // Pełna baza = songs.mjs + wszystkie tracki z albumów + YT tracki z Cloud (zdeduplikowane po id)
-  const map = new Map<string, Song>();
-  for (const s of SONGS) map.set(s.id, s);
-  for (const a of ALBUMS) for (const s of a.songs) if (!map.has(s.id)) map.set(s.id, s);
-  for (const s of getYtPool()) if (!map.has(s.id)) map.set(s.id, s);
-  for (const a of getYtAlbums()) for (const s of a.songs) if (!map.has(s.id)) map.set(s.id, s);
-  return Array.from(map.values());
+  // Pełna baza = songs.mjs + wszystkie tracki z albumów + YT tracki z Cloud
+  // Deduplikujemy najpierw po id, potem po (artysta+tytuł) — żeby ten sam utwór
+  // dodany w albumie i jako pojedynczy track nie pojawiał się dwa razy.
+  const byId = new Map<string, Song>();
+  const push = (s: Song) => { if (!byId.has(s.id)) byId.set(s.id, s); };
+  for (const s of SONGS) push(s);
+  // YT pojedyncze tracki priorytetowo nad albumowymi (jak były dodane jako single)
+  for (const s of getYtPool()) push(s);
+  for (const a of ALBUMS) for (const s of a.songs) push(s);
+  for (const a of getYtAlbums()) for (const s of a.songs) push(s);
+
+  const byKey = new Map<string, Song>();
+  for (const s of byId.values()) {
+    const k = songKey(s);
+    if (!byKey.has(k)) byKey.set(k, s);
+  }
+  return Array.from(byKey.values());
 }
 
 export function albums(): Album[] { return [...getYtAlbums(), ...ALBUMS]; }
@@ -70,4 +80,13 @@ export function fuzzyMatch(query: string, song: Song): boolean {
   const q = normalize(query);
   if (!q) return false;
   return normalize(song.title).includes(q) || normalize(song.artist).includes(q);
+}
+
+/** Klucz "ten sam utwór" — normalizowany artysta + tytuł. */
+export function songKey(s: Song): string {
+  return `${normalize(s.artist)}|${normalize(s.title)}`;
+}
+
+export function sameSong(a: Song, b: Song): boolean {
+  return a.id === b.id || songKey(a) === songKey(b);
 }

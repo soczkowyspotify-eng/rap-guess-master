@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   DIFFICULTY, allSongs, dailySong, dailyKey, dailyNumber, songsForAlbum,
-  pickRandom, fuzzyMatch, type Mode, type Difficulty,
+  pickRandom, fuzzyMatch, sameSong, type Mode, type Difficulty,
 } from "@/lib/game-data";
 import { Storage, type DailyHistoryEntry } from "@/lib/storage";
 import type { Song } from "@/data/songs";
@@ -164,7 +164,7 @@ export function useGame({ mode, difficulty, albumId }: Options) {
 
   const submitGuess = useCallback((song: Song) => {
     if (!track || status !== "playing") return;
-    if (song.id === track.id) onCorrect();
+    if (sameSong(song, track)) onCorrect();
     else onWrong(song.id);
   }, [track, status, onCorrect, onWrong]);
 
