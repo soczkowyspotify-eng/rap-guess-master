@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
 import { GameBoard } from "@/components/game/game-board";
 import { useGame } from "@/hooks/use-game";
@@ -25,7 +24,6 @@ interface LoadedPlaylist {
 }
 
 function SpotifyPage() {
-  const fetchFn = useServerFn(fetchSpotifyPlaylist);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +35,7 @@ function SpotifyPage() {
     if (!url.trim()) return;
     setLoading(true); setError(null); setPl(null);
     try {
-      const res = await fetchFn({ data: { url } });
+      const res = await fetchSpotifyPlaylist({ data: { url } });
       if (res.error) { setError(res.error); return; }
       if (!res.tracks.length) { setError("Ta playlista nie zwróciła żadnych tracków z preview (Spotify ich nie udostępnia)."); return; }
       const songs: Song[] = res.tracks.map((t: SpotifyTrack) => ({
