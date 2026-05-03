@@ -1,5 +1,6 @@
 import { SONGS, type Song } from "@/data/songs";
 import { ALBUMS, type Album } from "@/data/albums";
+import { getYtPool } from "./yt-pool";
 
 export type Difficulty = "easy" | "normal" | "hard";
 
@@ -12,10 +13,11 @@ export const DIFFICULTY: Record<Difficulty, { durations: number[]; attempts: num
 export type Mode = "daily" | "endless" | "album";
 
 export function allSongs(): Song[] {
-  // Pełna baza = songs.mjs + wszystkie tracki z albumów (zdeduplikowane po id)
+  // Pełna baza = songs.mjs + wszystkie tracki z albumów + YT tracki z Cloud (zdeduplikowane po id)
   const map = new Map<string, Song>();
   for (const s of SONGS) map.set(s.id, s);
   for (const a of ALBUMS) for (const s of a.songs) if (!map.has(s.id)) map.set(s.id, s);
+  for (const s of getYtPool()) if (!map.has(s.id)) map.set(s.id, s);
   return Array.from(map.values());
 }
 
