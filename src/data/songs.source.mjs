@@ -555,8 +555,8 @@ export const SONGS_DB = [
     title: 'Mleko & miód',
     artist: 'Taconafide, Taco Hemingway, Quebonafide',
 
-    type: 'url',
-    src: 'https://pub-8247d6c452064a33b8f98ab2cc36e7e1.r2.dev/SOMA05/Mleko%20%26%20mi%C3%B3d%20TACONAFIDE%202018-04-13.mp3'
+    type: 'youtube',
+    src: 'eyp8CLHn1LA'
   }, 
 
     {
