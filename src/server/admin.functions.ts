@@ -106,6 +106,14 @@ export const addYtAlbum = createServerFn({ method: "POST" })
       if (!vid) throw new Error(`Niepoprawny link YouTube w tracku #${i + 1}`);
       return { video_id: vid, artist: t.artist.trim(), title: t.title.trim(), position: i };
     });
+    const seen = new Map<string, number>();
+    for (let i = 0; i < trackRows.length; i++) {
+      const prev = seen.get(trackRows[i].video_id);
+      if (prev !== undefined) {
+        throw new Error(`Duplikat linku: track #${prev + 1} i #${i + 1} mają ten sam film`);
+      }
+      seen.set(trackRows[i].video_id, i);
+    }
     const { data: album, error: aErr } = await supabaseAdmin
       .from("yt_albums")
       .insert({
@@ -154,6 +162,14 @@ export const updateYtAlbum = createServerFn({ method: "POST" })
       if (!vid) throw new Error(`Niepoprawny link YouTube w tracku #${i + 1}`);
       return { video_id: vid, artist: t.artist.trim(), title: t.title.trim(), position: i };
     });
+    const seen = new Map<string, number>();
+    for (let i = 0; i < trackRows.length; i++) {
+      const prev = seen.get(trackRows[i].video_id);
+      if (prev !== undefined) {
+        throw new Error(`Duplikat linku: track #${prev + 1} i #${i + 1} mają ten sam film`);
+      }
+      seen.set(trackRows[i].video_id, i);
+    }
     const { error: uErr } = await supabaseAdmin
       .from("yt_albums")
       .update({
