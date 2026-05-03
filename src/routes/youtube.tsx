@@ -261,7 +261,11 @@ function YouTubePage() {
         {current && (
           <div className="space-y-6">
             <div className="rounded-3xl border border-hairline bg-paper p-6 sm:p-8 text-center">
-              <DurationStepper durations={conf.durations} attemptIdx={attemptIdx} maxAttempts={conf.attempts} />
+                <DurationStepper
+                  durations={conf.durations}
+                  currentIdx={attemptIdx}
+                  guesses={Array.from({ length: attemptIdx }, () => ({ correct: false }))}
+                />
               <div className="mt-6 flex items-center justify-center gap-3">
                 <button
                   onClick={() => playing ? stopPlayback() : playSnippet()}
