@@ -3,9 +3,25 @@ import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { GameBoard } from "@/components/game/game-board";
 import { useGame } from "@/hooks/use-game";
-import { fetchSpotifyPlaylist, type SpotifyTrack } from "@/server/spotify.functions";
 import type { Song } from "@/data/songs";
 import { Loader2 } from "lucide-react";
+
+interface SpotifyTrack {
+  id: string;
+  title: string;
+  artist: string;
+  year?: number;
+  src: string;
+  cover?: string;
+}
+
+interface SpotifyPlaylistResponse {
+  name: string;
+  total: number;
+  withPreview: number;
+  tracks: SpotifyTrack[];
+  error?: string;
+}
 
 export const Route = createFileRoute("/spotify")({
   head: () => ({ meta: [
@@ -35,7 +51,12 @@ function SpotifyPage() {
     if (!url.trim()) return;
     setLoading(true); setError(null); setPl(null);
     try {
-      const res = await fetchSpotifyPlaylist({ data: { url } });
+      const response = await fetch("/api/spotify-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const res = await response.json() as SpotifyPlaylistResponse;
       if (res.error) { setError(res.error); return; }
       if (!res.tracks.length) { setError("Ta playlista nie zwróciła żadnych tracków z preview (Spotify ich nie udostępnia)."); return; }
       const songs: Song[] = res.tracks.map((t: SpotifyTrack) => ({
