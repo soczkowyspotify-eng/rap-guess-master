@@ -13,7 +13,7 @@ export const Route = createFileRoute("/albums/")({
 function AlbumsPage() {
   useSyncExternalStore(subscribeYt, () => getYtAlbums().length, () => 0);
   useEffect(() => { loadYtAlbums(); }, []);
-  const list = albums();
+  const list = albums().slice().sort((a, b) => Number(!!b.recommended) - Number(!!a.recommended));
   const progress = Storage.getAlbumProgress();
   return (
     <div className="min-h-screen bg-paper">
@@ -38,6 +38,9 @@ function AlbumsPage() {
               >
                 <div className="aspect-square rounded-2xl overflow-hidden border border-hairline relative shadow-soft group-hover:shadow-lift transition">
                   <img src={a.cover} alt={a.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  {a.recommended && (
+                    <div className="absolute top-3 left-3 bg-primary text-paper text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full shadow-soft">⭐ Polecamy</div>
+                  )}
                   {done === a.songs.length && (
                     <div className="absolute top-3 right-3 bg-success text-paper text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full">100%</div>
                   )}

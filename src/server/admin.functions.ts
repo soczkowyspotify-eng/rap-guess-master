@@ -93,6 +93,7 @@ const AddAlbumSchema = PwSchema.extend({
   artist: z.string().min(1).max(200),
   title: z.string().min(1).max(200),
   year: z.number().int().min(1900).max(2100).optional().nullable(),
+  recommended: z.boolean().optional(),
   tracks: z.array(AlbumTrackSchema).min(1).max(100),
 });
 
@@ -121,6 +122,7 @@ export const addYtAlbum = createServerFn({ method: "POST" })
         artist: data.artist.trim(),
         title: data.title.trim(),
         year: data.year ?? null,
+        recommended: data.recommended ?? false,
       })
       .select()
       .single();
@@ -150,6 +152,7 @@ const UpdateAlbumSchema = PwSchema.extend({
   artist: z.string().min(1).max(200),
   title: z.string().min(1).max(200),
   year: z.number().int().min(1900).max(2100).optional().nullable(),
+  recommended: z.boolean().optional(),
   tracks: z.array(AlbumTrackSchema).min(1).max(100),
 });
 
@@ -177,6 +180,7 @@ export const updateYtAlbum = createServerFn({ method: "POST" })
         artist: data.artist.trim(),
         title: data.title.trim(),
         year: data.year ?? null,
+        recommended: data.recommended ?? false,
       })
       .eq("id", data.id);
     if (uErr) throw new Error(uErr.message);

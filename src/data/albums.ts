@@ -8,6 +8,7 @@ export interface Album {
   year: number;
   cover: string;
   songs: Song[];
+  recommended?: boolean;
 }
 
 export const ALBUMS: Album[] = (RAW as Album[]).filter((a) => a && a.id && a.songs?.length);
