@@ -25,7 +25,7 @@ function AlbumsPage() {
           <p className="mt-3 text-ink-muted max-w-lg">Każdy album to osobne wyzwanie. Zgaduj wszystkie tracki, śledź postęp i bij swój rekord.</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {list.map(a => {
+          {list.map((a, i) => {
             const p = progress[a.id];
             const done = p?.guessed.length ?? 0;
             const pct = (done / a.songs.length) * 100;
@@ -34,15 +34,16 @@ function AlbumsPage() {
                 key={a.id}
                 to="/albums/$albumId"
                 params={{ albumId: a.id }}
-                className="group block"
+                className="group block animate-fade-in-up"
+                style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
               >
-                <div className="aspect-square rounded-2xl overflow-hidden border border-hairline relative shadow-soft group-hover:shadow-lift transition">
+                <div className="aspect-square rounded-2xl overflow-hidden border border-hairline relative shadow-soft group-hover:shadow-lift transition-all duration-300 group-hover:-translate-y-1">
                   <img src={a.cover} alt={a.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   {a.recommended && (
-                    <div className="absolute top-3 left-3 bg-primary text-paper text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full shadow-soft">⭐ Polecamy</div>
+                    <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full shadow-soft animate-pulse-glow">⭐ Polecamy</div>
                   )}
                   {done === a.songs.length && (
-                    <div className="absolute top-3 right-3 bg-success text-paper text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full">100%</div>
+                    <div className="absolute top-3 right-3 bg-success text-paper text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full animate-scale-in">100%</div>
                   )}
                 </div>
                 <div className="mt-3">

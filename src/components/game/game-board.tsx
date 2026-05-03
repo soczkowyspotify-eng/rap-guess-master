@@ -70,7 +70,7 @@ export function GameBoard({ game, cover, hideAnswerOnLoss = false }: Props) {
       )}
 
       {ended && (
-        <div className="w-full text-center space-y-2 py-6 border-y border-hairline">
+        <div className="w-full text-center space-y-2 py-6 border-y border-hairline animate-fade-in-up">
           <div className={cn("text-xs uppercase tracking-[0.2em]", won ? "text-success" : "text-primary")}>
             {won ? "Trafione" : "Pudło"}
           </div>
