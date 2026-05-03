@@ -32,7 +32,7 @@ export function GameBoard({ game, cover, hideAnswerOnLoss = false }: Props) {
   const won = game.status === "won";
 
   return (
-    <div className="w-full max-w-xl mx-auto flex flex-col items-center gap-8">
+    <div className="w-full max-w-xl mx-auto flex flex-col items-center gap-6 sm:gap-8 px-1">
       <Vinyl spinning={playing} cover={ended || cover ? (cover ?? undefined) : undefined} />
 
       <div className="w-full space-y-4">
