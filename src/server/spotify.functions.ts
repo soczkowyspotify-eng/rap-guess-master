@@ -80,6 +80,8 @@ export const fetchSpotifyPlaylist = createServerFn({ method: "POST" })
     // tracks (paginated)
     const tracks: SpotifyTrack[] = [];
     let total = 0;
+    type Pending = { id: string; title: string; artist: string; year?: number; cover?: string; preview: string | null };
+    const pending: Pending[] = [];
     let url: string | null = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100&fields=next,total,items(track(id,name,preview_url,album(name,release_date,images),artists(name)))`;
     while (url) {
       const r: Response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -89,17 +91,58 @@ export const fetchSpotifyPlaylist = createServerFn({ method: "POST" })
       for (const it of j.items ?? []) {
         const t = it?.track;
         if (!t || !t.id) continue;
-        if (!t.preview_url) continue;
-        tracks.push({
-          id: `sp:${t.id}`,
+        pending.push({
+          id: t.id,
           title: t.name,
           artist: (t.artists ?? []).map((a: any) => a.name).join(", "),
           year: t.album?.release_date ? Number(String(t.album.release_date).slice(0, 4)) : undefined,
-          src: t.preview_url,
           cover: t.album?.images?.[0]?.url,
+          preview: t.preview_url ?? null,
         });
       }
       url = j.next ?? null;
+    }
+
+    // Fallback: pobierz preview z embeda Spotify dla tracków bez preview_url
+    async function embedPreview(id: string): Promise<string | null> {
+      try {
+        const r = await fetch(`https://open.spotify.com/embed/track/${id}`, {
+          headers: { "User-Agent": "Mozilla/5.0" },
+        });
+        if (!r.ok) return null;
+        const html = await r.text();
+        const m = html.match(/"audioPreview"\s*:\s*\{\s*"url"\s*:\s*"([^"]+)"/);
+        if (m) return m[1];
+        // alternatywny wzorzec
+        const m2 = html.match(/https:\\u002F\\u002Fp\.scdn\.co\\u002Fmp3-preview\\u002F[a-f0-9]+/);
+        if (m2) return m2[0].replace(/\\u002F/g, "/");
+        const m3 = html.match(/https:\/\/p\.scdn\.co\/mp3-preview\/[a-f0-9]+/);
+        if (m3) return m3[0];
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    // Równolegle, batchami po 8
+    const BATCH = 8;
+    for (let i = 0; i < pending.length; i += BATCH) {
+      const batch = pending.slice(i, i + BATCH);
+      await Promise.all(batch.map(async (p) => {
+        if (!p.preview) p.preview = await embedPreview(p.id);
+      }));
+    }
+
+    for (const p of pending) {
+      if (!p.preview) continue;
+      tracks.push({
+        id: `sp:${p.id}`,
+        title: p.title,
+        artist: p.artist,
+        year: p.year,
+        src: p.preview,
+        cover: p.cover,
+      });
     }
 
     return { name: meta.name, total, withPreview: tracks.length, tracks };
