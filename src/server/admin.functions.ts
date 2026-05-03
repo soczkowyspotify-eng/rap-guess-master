@@ -121,6 +121,7 @@ export const addYtAlbum = createServerFn({ method: "POST" })
         artist: data.artist.trim(),
         title: data.title.trim(),
         year: data.year ?? null,
+        recommended: data.recommended ?? false,
       })
       .select()
       .single();
