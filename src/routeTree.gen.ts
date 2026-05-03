@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as EndlessRouteImport } from './routes/endless'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as IndexRouteImport } from './routes/index'
@@ -19,6 +20,11 @@ import { Route as AlbumsAlbumIdRouteImport } from './routes/albums.$albumId'
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EndlessRoute = EndlessRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
+  '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums/': typeof AlbumsIndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
+  '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums': typeof AlbumsIndexRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
+  '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums/': typeof AlbumsIndexRoute
@@ -78,16 +87,25 @@ export interface FileRouteTypes {
     | '/'
     | '/daily'
     | '/endless'
+    | '/settings'
     | '/stats'
     | '/albums/$albumId'
     | '/albums/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/daily' | '/endless' | '/stats' | '/albums/$albumId' | '/albums'
+  to:
+    | '/'
+    | '/daily'
+    | '/endless'
+    | '/settings'
+    | '/stats'
+    | '/albums/$albumId'
+    | '/albums'
   id:
     | '__root__'
     | '/'
     | '/daily'
     | '/endless'
+    | '/settings'
     | '/stats'
     | '/albums/$albumId'
     | '/albums/'
@@ -97,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DailyRoute: typeof DailyRoute
   EndlessRoute: typeof EndlessRoute
+  SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
   AlbumsAlbumIdRoute: typeof AlbumsAlbumIdRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
@@ -109,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/stats'
       fullPath: '/stats'
       preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/endless': {
@@ -153,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DailyRoute: DailyRoute,
   EndlessRoute: EndlessRoute,
+  SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
   AlbumsAlbumIdRoute: AlbumsAlbumIdRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
