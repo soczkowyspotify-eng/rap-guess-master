@@ -58,6 +58,7 @@ export type Database = {
           cover_url: string
           created_at: string
           id: string
+          recommended: boolean
           title: string
           year: number | null
         }
@@ -66,6 +67,7 @@ export type Database = {
           cover_url: string
           created_at?: string
           id?: string
+          recommended?: boolean
           title: string
           year?: number | null
         }
@@ -74,6 +76,7 @@ export type Database = {
           cover_url?: string
           created_at?: string
           id?: string
+          recommended?: boolean
           title?: string
           year?: number | null
         }
