@@ -26,6 +26,15 @@ function extractVid(input: string): string | null {
   return m ? m[1] : null;
 }
 
+function parseStart(input: string): number {
+  const t = input.trim();
+  if (!t) return 0;
+  if (/^\d+$/.test(t)) return Math.max(0, parseInt(t, 10));
+  const m = t.match(/^(\d+):(\d{1,2})$/);
+  if (m) return Math.max(0, parseInt(m[1], 10) * 60 + parseInt(m[2], 10));
+  return 0;
+}
+
 interface Row { id: string; video_id: string; artist: string; title: string; created_at: string; }
 interface AlbumRow {
   id: string; cover_url: string; artist: string; title: string; year: number | null; created_at: string;
