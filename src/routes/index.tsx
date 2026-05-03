@@ -27,9 +27,9 @@ function Index() {
   return (
     <div className="min-h-screen bg-paper">
       <AppHeader />
-      <main className="max-w-6xl mx-auto px-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Hero */}
-        <section className="grid md:grid-cols-2 gap-12 items-center py-16 md:py-24">
+        <section className="grid md:grid-cols-2 gap-8 md:gap-12 items-center py-10 sm:py-16 md:py-24">
           <div>
             <motion.p
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -39,7 +39,7 @@ function Index() {
             </motion.p>
             <motion.h1
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-              className="font-display text-5xl md:text-7xl leading-[0.95] tracking-tight"
+              className="font-display text-4xl sm:text-5xl md:text-7xl leading-[0.95] tracking-tight"
             >
               Zgadnij<br/>z <span className="text-primary">pół sekundy</span>.
             </motion.h1>
@@ -67,19 +67,20 @@ function Index() {
             initial={{ opacity: 0, scale: 0.9, rotate: -12 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex justify-center"
+            className="flex justify-center order-first md:order-last"
           >
-            <Vinyl spinning size={360} />
+            <Vinyl spinning size={240} className="sm:hidden" />
+            <Vinyl spinning size={360} className="hidden sm:block" />
           </motion.div>
         </section>
 
         {/* Modes */}
-        <section className="py-16 border-t border-hairline">
-          <div className="flex items-end justify-between mb-10">
-            <h2 className="font-display text-3xl md:text-4xl">Tryby gry</h2>
+        <section className="py-12 sm:py-16 border-t border-hairline">
+          <div className="flex items-end justify-between mb-6 sm:mb-10">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl">Tryby gry</h2>
             <span className="text-xs font-mono text-ink-muted">03 / TRYBY</span>
           </div>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
             {MODES.map((m, i) => (
               <Link
                 key={m.to}
