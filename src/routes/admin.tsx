@@ -421,11 +421,12 @@ function AdminPage() {
               </div>
               <div className="space-y-2">
                 {aTracks.map((t, i) => (
-                  <div key={i} className="grid grid-cols-1 md:grid-cols-[28px_1fr_1fr_1fr_36px] gap-2 items-center">
+                  <div key={i} className="grid grid-cols-1 md:grid-cols-[28px_1fr_1fr_1fr_80px_36px] gap-2 items-center">
                     <div className="text-sm font-mono text-ink-muted text-center">{i + 1}.</div>
                     <input value={t.link} onChange={(e) => updateTrack(i, "link", e.target.value)} placeholder="Link YT Music" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                     <input value={t.artist} onChange={(e) => updateTrack(i, "artist", e.target.value)} placeholder="Artyści (po przecinku)" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                     <input value={t.title} onChange={(e) => updateTrack(i, "title", e.target.value)} placeholder="Tytuł" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
+                    <input value={t.start_sec} onChange={(e) => updateTrack(i, "start_sec", e.target.value)} placeholder="0:08" title="Offset startu (sekundy lub mm:ss)" className="h-10 px-2 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm font-mono text-center" />
                     <button type="button" onClick={() => removeTrackRow(i)} className="h-10 w-9 rounded-lg inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted" aria-label="Usuń">
                       <X className="h-4 w-4" />
                     </button>
