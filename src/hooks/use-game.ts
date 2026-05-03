@@ -14,17 +14,19 @@ interface Options {
   mode: Mode;
   difficulty?: Difficulty;
   albumId?: string;
+  poolOverride?: Song[];
 }
 
-export function useGame({ mode, difficulty, albumId }: Options) {
+export function useGame({ mode, difficulty, albumId, poolOverride }: Options) {
   // Daily zawsze normal — żeby ranking był uczciwy
   const effDiff: Difficulty = mode === "daily" ? "normal" : (difficulty ?? "normal");
   const conf = DIFFICULTY[effDiff];
 
   const pool: Song[] = useMemo(() => {
+    if (poolOverride && poolOverride.length) return poolOverride;
     if (mode === "album" && albumId) return songsForAlbum(albumId);
     return allSongs();
-  }, [mode, albumId]);
+  }, [mode, albumId, poolOverride]);
 
   // Album playthrough — kolejność
   const [albumQueue, setAlbumQueue] = useState<Song[]>(() => {
