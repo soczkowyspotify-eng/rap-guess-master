@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      yt_album_tracks: {
+        Row: {
+          album_id: string
+          artist: string
+          created_at: string
+          id: string
+          position: number
+          title: string
+          video_id: string
+        }
+        Insert: {
+          album_id: string
+          artist: string
+          created_at?: string
+          id?: string
+          position?: number
+          title: string
+          video_id: string
+        }
+        Update: {
+          album_id?: string
+          artist?: string
+          created_at?: string
+          id?: string
+          position?: number
+          title?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yt_album_tracks_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "yt_albums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      yt_albums: {
+        Row: {
+          artist: string
+          cover_url: string
+          created_at: string
+          id: string
+          title: string
+          year: number | null
+        }
+        Insert: {
+          artist: string
+          cover_url: string
+          created_at?: string
+          id?: string
+          title: string
+          year?: number | null
+        }
+        Update: {
+          artist?: string
+          cover_url?: string
+          created_at?: string
+          id?: string
+          title?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       yt_tracks: {
         Row: {
           artist: string

@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useSyncExternalStore } from "react";
 import { AppHeader } from "@/components/app-header";
 import { albums } from "@/lib/game-data";
 import { Storage } from "@/lib/storage";
+import { loadYtAlbums, subscribeYt, getYtAlbums } from "@/lib/yt-pool";
 
 export const Route = createFileRoute("/albums/")({
   head: () => ({ meta: [{ title: "Albumy — RAP GUESSER" }, { name: "description", content: "Wybierz album i zgaduj jego tracki." }] }),
@@ -9,6 +11,8 @@ export const Route = createFileRoute("/albums/")({
 });
 
 function AlbumsPage() {
+  useSyncExternalStore(subscribeYt, () => getYtAlbums().length, () => 0);
+  useEffect(() => { loadYtAlbums(); }, []);
   const list = albums();
   const progress = Storage.getAlbumProgress();
   return (
