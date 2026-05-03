@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   DIFFICULTY, allSongs, dailySong, dailyKey, dailyNumber, songsForAlbum,
   pickRandom, fuzzyMatch, type Mode, type Difficulty,
@@ -6,6 +6,7 @@ import {
 import { Storage, type DailyHistoryEntry } from "@/lib/storage";
 import type { Song } from "@/data/songs";
 import { toast } from "sonner";
+import { loadYtTracks, subscribeYt, getYtPool } from "@/lib/yt-pool";
 
 export type GuessResult = { trackId: string; correct: boolean; skipped?: boolean };
 export type Status = "playing" | "won" | "lost";
@@ -21,10 +22,18 @@ export function useGame({ mode, difficulty, albumId }: Options) {
   const effDiff: Difficulty = mode === "daily" ? "normal" : (difficulty ?? "normal");
   const conf = DIFFICULTY[effDiff];
 
+  // Re-render kiedy zmieni się pula YT z Cloud
+  useSyncExternalStore(
+    subscribeYt,
+    () => getYtPool().length,
+    () => 0,
+  );
+  useEffect(() => { loadYtTracks(); }, []);
+
   const pool: Song[] = useMemo(() => {
     if (mode === "album" && albumId) return songsForAlbum(albumId);
     return allSongs();
-  }, [mode, albumId]);
+  }, [mode, albumId, getYtPool().length]);
 
   // Album playthrough — kolejność
   const [albumQueue, setAlbumQueue] = useState<Song[]>(() => {
