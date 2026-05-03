@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as SpotifyRouteImport } from './routes/spotify'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as EndlessRouteImport } from './routes/endless'
 import { Route as DailyRouteImport } from './routes/daily'
@@ -20,6 +21,11 @@ import { Route as AlbumsAlbumIdRouteImport } from './routes/albums.$albumId'
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpotifyRoute = SpotifyRouteImport.update({
+  id: '/spotify',
+  path: '/spotify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
+  '/spotify': typeof SpotifyRoute
   '/stats': typeof StatsRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums/': typeof AlbumsIndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
+  '/spotify': typeof SpotifyRoute
   '/stats': typeof StatsRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums': typeof AlbumsIndexRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
+  '/spotify': typeof SpotifyRoute
   '/stats': typeof StatsRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums/': typeof AlbumsIndexRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/daily'
     | '/endless'
     | '/settings'
+    | '/spotify'
     | '/stats'
     | '/albums/$albumId'
     | '/albums/'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/daily'
     | '/endless'
     | '/settings'
+    | '/spotify'
     | '/stats'
     | '/albums/$albumId'
     | '/albums'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/daily'
     | '/endless'
     | '/settings'
+    | '/spotify'
     | '/stats'
     | '/albums/$albumId'
     | '/albums/'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   DailyRoute: typeof DailyRoute
   EndlessRoute: typeof EndlessRoute
   SettingsRoute: typeof SettingsRoute
+  SpotifyRoute: typeof SpotifyRoute
   StatsRoute: typeof StatsRoute
   AlbumsAlbumIdRoute: typeof AlbumsAlbumIdRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/stats'
       fullPath: '/stats'
       preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spotify': {
+      id: '/spotify'
+      path: '/spotify'
+      fullPath: '/spotify'
+      preLoaderRoute: typeof SpotifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   DailyRoute: DailyRoute,
   EndlessRoute: EndlessRoute,
   SettingsRoute: SettingsRoute,
+  SpotifyRoute: SpotifyRoute,
   StatsRoute: StatsRoute,
   AlbumsAlbumIdRoute: AlbumsAlbumIdRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
