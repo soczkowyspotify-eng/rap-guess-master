@@ -14,11 +14,6 @@ export const Route = createFileRoute("/albums/$albumId")({
       { name: "description", content: a ? `Zgaduj tracki z albumu ${a.title}.` : "Tryb album." },
     ]};
   },
-  loader: ({ params }) => {
-    const a = albumById(params.albumId);
-    if (!a) throw notFound();
-    return { album: a };
-  },
   component: AlbumPage,
   notFoundComponent: () => (
     <div className="min-h-screen bg-paper">
@@ -32,7 +27,9 @@ export const Route = createFileRoute("/albums/$albumId")({
 });
 
 function AlbumPage() {
-  const { album } = Route.useLoaderData();
+  const { albumId } = Route.useParams();
+  const album = albumById(albumId);
+  if (!album) throw notFound();
   const game = useGame({ mode: "album", albumId: album.id, difficulty: Storage.getSettings().difficulty });
   const progress = Storage.getAlbumProgress()[album.id];
   const done = progress?.guessed.length ?? 0;
