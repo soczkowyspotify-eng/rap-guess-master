@@ -4,6 +4,9 @@ import { AppHeader } from "@/components/app-header";
 import { Storage } from "@/lib/storage";
 import { DIFFICULTY, type Difficulty } from "@/lib/game-data";
 import { toast } from "sonner";
+import { useTheme } from "@/components/theme/theme-provider";
+import { Sun, Moon, Monitor } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Ustawienia — RAP GUESSER" }, { name: "description", content: "Trudność, motyw, reset postępu." }] }),
@@ -12,6 +15,7 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const [diff, setDiff] = useState<Difficulty>(() => Storage.getSettings().difficulty);
+  const { theme, setTheme } = useTheme();
 
   const change = (d: Difficulty) => {
     setDiff(d);
@@ -28,11 +32,38 @@ function SettingsPage() {
   return (
     <div className="min-h-screen bg-paper">
       <AppHeader />
-      <main className="max-w-2xl mx-auto px-6 py-10 space-y-12">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-10 sm:space-y-12">
         <header>
           <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">Ustawienia</p>
-          <h1 className="font-display text-4xl md:text-5xl mt-2">Konfiguracja</h1>
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl mt-2">Konfiguracja</h1>
         </header>
+
+        <section>
+          <h2 className="font-display text-xl mb-4">Motyw</h2>
+          <div className="grid grid-cols-3 gap-3">
+            {([
+              { id: "light", label: "Jasny", icon: Sun },
+              { id: "dark", label: "Ciemny", icon: Moon },
+              { id: "system", label: "Systemowy", icon: Monitor },
+            ] as const).map(opt => {
+              const active = theme === opt.id;
+              const Icon = opt.icon;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setTheme(opt.id)}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-2xl border transition",
+                    active ? "border-ink bg-card shadow-soft" : "border-hairline hover:border-ink/40",
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-sm">{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
         <section>
           <h2 className="font-display text-xl mb-4">Trudność (Endless · Album)</h2>
