@@ -1,12 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
 import { GameBoard } from "@/components/game/game-board";
 import { useGame } from "@/hooks/use-game";
-import { fetchSpotifyPlaylist, type SpotifyTrack } from "@/server/spotify.functions";
 import type { Song } from "@/data/songs";
 import { Loader2 } from "lucide-react";
+
+interface SpotifyTrack {
+  id: string;
+  title: string;
+  artist: string;
+  year?: number;
+  src: string;
+  cover?: string;
+}
+
+interface SpotifyPlaylistResponse {
+  name: string;
+  total: number;
+  withPreview: number;
+  tracks: SpotifyTrack[];
+  error?: string;
+}
 
 export const Route = createFileRoute("/spotify")({
   head: () => ({ meta: [
@@ -25,7 +40,6 @@ interface LoadedPlaylist {
 }
 
 function SpotifyPage() {
-  const fetchFn = useServerFn(fetchSpotifyPlaylist);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +51,12 @@ function SpotifyPage() {
     if (!url.trim()) return;
     setLoading(true); setError(null); setPl(null);
     try {
-      const res = await fetchFn({ data: { url } });
+      const response = await fetch("/api/spotify-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const res = await response.json() as SpotifyPlaylistResponse;
       if (res.error) { setError(res.error); return; }
       if (!res.tracks.length) { setError("Ta playlista nie zwróciła żadnych tracków z preview (Spotify ich nie udostępnia)."); return; }
       const songs: Song[] = res.tracks.map((t: SpotifyTrack) => ({
@@ -62,7 +81,7 @@ function SpotifyPage() {
           <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">Beta</p>
           <h1 className="font-display text-3xl sm:text-5xl mt-2">Z playlisty Spotify</h1>
           <p className="text-ink-muted text-sm sm:text-base mt-3">
-            Wklej link do publicznej playlisty. Gramy 30-sekundowymi preview od Spotify.
+            Wklej link do publicznej playlisty. Tracklista idzie ze Spotify, a próbki dobieramy automatycznie.
           </p>
         </div>
 
@@ -101,7 +120,7 @@ function PlaylistGame({ pl }: { pl: LoadedPlaylist }) {
       <div className="text-center mb-6">
         <p className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">{pl.name}</p>
         <p className="text-xs text-ink-muted mt-1">
-          {pl.withPreview} / {pl.total} tracków z preview
+          {pl.withPreview} / {pl.total} tracków z dostępną próbką
         </p>
       </div>
       <GameBoard game={game} cover={game.track ? pl.covers[game.track.id] : undefined} />
