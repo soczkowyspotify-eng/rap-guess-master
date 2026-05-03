@@ -6,7 +6,7 @@ import {
 import { Storage, type DailyHistoryEntry } from "@/lib/storage";
 import type { Song } from "@/data/songs";
 import { toast } from "sonner";
-import { loadYtTracks, subscribeYt, getYtPool } from "@/lib/yt-pool";
+import { loadYtTracks, loadYtAlbums, subscribeYt, getYtPool, getYtAlbums } from "@/lib/yt-pool";
 
 export type GuessResult = { trackId: string; correct: boolean; skipped?: boolean };
 export type Status = "playing" | "won" | "lost";
@@ -23,17 +23,17 @@ export function useGame({ mode, difficulty, albumId }: Options) {
   const conf = DIFFICULTY[effDiff];
 
   // Re-render kiedy zmieni się pula YT z Cloud
-  useSyncExternalStore(
+  const ytVersion = useSyncExternalStore(
     subscribeYt,
-    () => getYtPool().length,
+    () => getYtPool().length + getYtAlbums().length,
     () => 0,
   );
-  useEffect(() => { loadYtTracks(); }, []);
+  useEffect(() => { loadYtTracks(); loadYtAlbums(); }, []);
 
   const pool: Song[] = useMemo(() => {
     if (mode === "album" && albumId) return songsForAlbum(albumId);
     return allSongs();
-  }, [mode, albumId, getYtPool().length]);
+  }, [mode, albumId, ytVersion]);
 
   // Album playthrough — kolejność
   const [albumQueue, setAlbumQueue] = useState<Song[]>(() => {
