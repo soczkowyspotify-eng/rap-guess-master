@@ -86,6 +86,7 @@ const AlbumTrackSchema = z.object({
   link: z.string().min(1).max(500),
   artist: z.string().min(1).max(200),
   title: z.string().min(1).max(200),
+  start_sec: z.number().int().min(0).max(3600).optional(),
 });
 
 const AddAlbumSchema = PwSchema.extend({
@@ -105,7 +106,7 @@ export const addYtAlbum = createServerFn({ method: "POST" })
     const trackRows = data.tracks.map((t, i) => {
       const vid = extractVideoId(t.link);
       if (!vid) throw new Error(`Niepoprawny link YouTube w tracku #${i + 1}`);
-      return { video_id: vid, artist: t.artist.trim(), title: t.title.trim(), position: i };
+      return { video_id: vid, artist: t.artist.trim(), title: t.title.trim(), position: i, start_sec: t.start_sec ?? 0 };
     });
     const seen = new Map<string, number>();
     for (let i = 0; i < trackRows.length; i++) {
@@ -163,7 +164,7 @@ export const updateYtAlbum = createServerFn({ method: "POST" })
     const trackRows = data.tracks.map((t, i) => {
       const vid = extractVideoId(t.link);
       if (!vid) throw new Error(`Niepoprawny link YouTube w tracku #${i + 1}`);
-      return { video_id: vid, artist: t.artist.trim(), title: t.title.trim(), position: i };
+      return { video_id: vid, artist: t.artist.trim(), title: t.title.trim(), position: i, start_sec: t.start_sec ?? 0 };
     });
     const seen = new Map<string, number>();
     for (let i = 0; i < trackRows.length; i++) {

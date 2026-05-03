@@ -1,0 +1,1 @@
+ALTER TABLE public.yt_album_tracks ADD COLUMN start_sec integer NOT NULL DEFAULT 0;

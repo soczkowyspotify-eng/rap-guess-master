@@ -26,11 +26,20 @@ function extractVid(input: string): string | null {
   return m ? m[1] : null;
 }
 
+function parseStart(input: string): number {
+  const t = input.trim();
+  if (!t) return 0;
+  if (/^\d+$/.test(t)) return Math.max(0, parseInt(t, 10));
+  const m = t.match(/^(\d+):(\d{1,2})$/);
+  if (m) return Math.max(0, parseInt(m[1], 10) * 60 + parseInt(m[2], 10));
+  return 0;
+}
+
 interface Row { id: string; video_id: string; artist: string; title: string; created_at: string; }
 interface AlbumRow {
   id: string; cover_url: string; artist: string; title: string; year: number | null; created_at: string;
   recommended: boolean;
-  yt_album_tracks: { id: string; video_id: string; artist: string; title: string; position: number }[];
+  yt_album_tracks: { id: string; video_id: string; artist: string; title: string; position: number; start_sec: number }[];
 }
 
 type Tab = "tracks" | "albums";
@@ -64,8 +73,8 @@ function AdminPage() {
   const [aTitle, setATitle] = useState("");
   const [aYear, setAYear] = useState<string>("");
   const [aRecommended, setARecommended] = useState(false);
-  const [aTracks, setATracks] = useState<{ link: string; artist: string; title: string }[]>([
-    { link: "", artist: "", title: "" },
+  const [aTracks, setATracks] = useState<{ link: string; artist: string; title: string; start_sec: string }[]>([
+    { link: "", artist: "", title: "", start_sec: "" },
   ]);
   const [addingAlbum, setAddingAlbum] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -88,7 +97,7 @@ function AdminPage() {
     setRows((t ?? []) as Row[]);
     const { data: a } = await supabase
       .from("yt_albums")
-      .select("id, cover_url, artist, title, year, recommended, created_at, yt_album_tracks(id, video_id, artist, title, position)")
+      .select("id, cover_url, artist, title, year, recommended, created_at, yt_album_tracks(id, video_id, artist, title, position, start_sec)")
       .order("created_at", { ascending: false });
     setAlbumRows((a ?? []) as unknown as AlbumRow[]);
   };
@@ -161,7 +170,7 @@ function AdminPage() {
       toast.error("Uzupełnij okładkę, artystę i tytuł albumu"); return;
     }
     const tracks = aTracks
-      .map((t) => ({ link: t.link.trim(), artist: t.artist.trim(), title: t.title.trim() }))
+      .map((t) => ({ link: t.link.trim(), artist: t.artist.trim(), title: t.title.trim(), start_sec: parseStart(t.start_sec) }))
       .filter((t) => t.link && t.artist && t.title);
     if (!tracks.length) { toast.error("Dodaj przynajmniej jeden track"); return; }
     const ids = tracks.map((t) => extractVid(t.link)).filter(Boolean) as string[];
@@ -204,7 +213,7 @@ function AdminPage() {
     setEditingId(null);
     setACover(""); setAArtist(""); setATitle(""); setAYear("");
     setARecommended(false);
-    setATracks([{ link: "", artist: "", title: "" }]);
+    setATracks([{ link: "", artist: "", title: "", start_sec: "" }]);
   };
 
   const onEditAlbum = (a: AlbumRow) => {
@@ -216,8 +225,8 @@ function AdminPage() {
     setARecommended(!!a.recommended);
     const sorted = [...(a.yt_album_tracks ?? [])].sort((x, y) => x.position - y.position);
     setATracks(sorted.length
-      ? sorted.map((t) => ({ link: `https://music.youtube.com/watch?v=${t.video_id}`, artist: t.artist, title: t.title }))
-      : [{ link: "", artist: "", title: "" }]);
+      ? sorted.map((t) => ({ link: `https://music.youtube.com/watch?v=${t.video_id}`, artist: t.artist, title: t.title, start_sec: t.start_sec ? String(t.start_sec) : "" }))
+      : [{ link: "", artist: "", title: "", start_sec: "" }]);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -233,10 +242,10 @@ function AdminPage() {
     }
   };
 
-  const updateTrack = (idx: number, key: "link" | "artist" | "title", val: string) => {
+  const updateTrack = (idx: number, key: "link" | "artist" | "title" | "start_sec", val: string) => {
     setATracks((prev) => prev.map((t, i) => i === idx ? { ...t, [key]: val } : t));
   };
-  const addTrackRow = () => setATracks((p) => [...p, { link: "", artist: "", title: "" }]);
+  const addTrackRow = () => setATracks((p) => [...p, { link: "", artist: "", title: "", start_sec: "" }]);
   const removeTrackRow = (idx: number) => setATracks((p) => p.length > 1 ? p.filter((_, i) => i !== idx) : p);
 
   if (!authed) {
@@ -412,11 +421,12 @@ function AdminPage() {
               </div>
               <div className="space-y-2">
                 {aTracks.map((t, i) => (
-                  <div key={i} className="grid grid-cols-1 md:grid-cols-[28px_1fr_1fr_1fr_36px] gap-2 items-center">
+                  <div key={i} className="grid grid-cols-1 md:grid-cols-[28px_1fr_1fr_1fr_80px_36px] gap-2 items-center">
                     <div className="text-sm font-mono text-ink-muted text-center">{i + 1}.</div>
                     <input value={t.link} onChange={(e) => updateTrack(i, "link", e.target.value)} placeholder="Link YT Music" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                     <input value={t.artist} onChange={(e) => updateTrack(i, "artist", e.target.value)} placeholder="Artyści (po przecinku)" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                     <input value={t.title} onChange={(e) => updateTrack(i, "title", e.target.value)} placeholder="Tytuł" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
+                    <input value={t.start_sec} onChange={(e) => updateTrack(i, "start_sec", e.target.value)} placeholder="0:08" title="Offset startu (sekundy lub mm:ss)" className="h-10 px-2 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm font-mono text-center" />
                     <button type="button" onClick={() => removeTrackRow(i)} className="h-10 w-9 rounded-lg inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted" aria-label="Usuń">
                       <X className="h-4 w-4" />
                     </button>
