@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
-import { addYtTrack, deleteYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum } from "@/server/admin.functions";
+import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
 import { Trash2, Lock, Plus, Music, Disc3, X, Pencil } from "lucide-react";
@@ -34,6 +34,7 @@ function AdminPage() {
   const verify = useServerFn(verifyAdmin);
   const add = useServerFn(addYtTrack);
   const del = useServerFn(deleteYtTrack);
+  const updTrk = useServerFn(updateYtTrack);
   const addAlb = useServerFn(addYtAlbum);
   const delAlb = useServerFn(deleteYtAlbum);
   const updAlb = useServerFn(updateYtAlbum);
@@ -44,6 +45,7 @@ function AdminPage() {
   const [artist, setArtist] = useState("");
   const [title, setTitle] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editingTrackId, setEditingTrackId] = useState<string | null>(null);
 
   const [rows, setRows] = useState<Row[]>([]);
   const [albumRows, setAlbumRows] = useState<AlbumRow[]>([]);
@@ -104,14 +106,32 @@ function AdminPage() {
     }
     setAdding(true);
     try {
-      await add({ data: { password: pw, link, artist, title } });
-      toast.success("Dodano");
-      setLink(""); setArtist(""); setTitle("");
+      if (editingTrackId) {
+        await updTrk({ data: { password: pw, id: editingTrackId, link, artist, title } });
+        toast.success("Zapisano zmiany");
+      } else {
+        await add({ data: { password: pw, link, artist, title } });
+        toast.success("Dodano");
+      }
+      resetTrackForm();
       await refresh();
       await loadYtTracks();
     } catch (err: any) {
       toast.error(err?.message ?? "Błąd dodawania");
     } finally { setAdding(false); }
+  };
+
+  const resetTrackForm = () => {
+    setEditingTrackId(null);
+    setLink(""); setArtist(""); setTitle("");
+  };
+
+  const onEditTrack = (r: Row) => {
+    setEditingTrackId(r.id);
+    setLink(`https://music.youtube.com/watch?v=${r.video_id}`);
+    setArtist(r.artist);
+    setTitle(r.title);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const onDelete = async (id: string) => {
@@ -279,13 +299,20 @@ function AdminPage() {
           </div>
           <div className="flex justify-between items-center">
             <p className="text-xs text-ink-muted">Najlepiej linki z <strong>music.youtube.com</strong> (brak intra teledysku).</p>
-            <button
-              type="submit"
-              disabled={adding}
-              className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40"
-            >
-              <Plus className="h-4 w-4" /> {adding ? "Dodaję…" : "Dodaj"}
-            </button>
+            <div className="flex gap-2">
+              {editingTrackId && (
+                <button type="button" onClick={resetTrackForm} className="inline-flex items-center gap-2 px-5 h-11 rounded-full border border-hairline text-sm font-medium hover:bg-muted">
+                  Anuluj
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={adding}
+                className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40"
+              >
+                <Plus className="h-4 w-4" /> {adding ? (editingTrackId ? "Zapisuję…" : "Dodaję…") : (editingTrackId ? "Zapisz zmiany" : "Dodaj")}
+              </button>
+            </div>
           </div>
         </form>
 
@@ -311,6 +338,13 @@ function AdminPage() {
                 >
                   {r.video_id}
                 </a>
+                <button
+                  onClick={() => onEditTrack(r)}
+                  className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-muted transition"
+                  aria-label="Edytuj"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
                 <button
                   onClick={() => onDelete(r.id)}
                   className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted transition"
@@ -355,7 +389,8 @@ function AdminPage() {
               </div>
               <div className="space-y-2">
                 {aTracks.map((t, i) => (
-                  <div key={i} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_36px] gap-2">
+                  <div key={i} className="grid grid-cols-1 md:grid-cols-[28px_1fr_1fr_1fr_36px] gap-2 items-center">
+                    <div className="text-sm font-mono text-ink-muted text-center">{i + 1}.</div>
                     <input value={t.link} onChange={(e) => updateTrack(i, "link", e.target.value)} placeholder="Link YT Music" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                     <input value={t.artist} onChange={(e) => updateTrack(i, "artist", e.target.value)} placeholder="Artyści (po przecinku)" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                     <input value={t.title} onChange={(e) => updateTrack(i, "title", e.target.value)} placeholder="Tytuł" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
