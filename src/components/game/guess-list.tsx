@@ -9,7 +9,7 @@ export function GuessList({ guesses, pool }: { guesses: GuessResult[]; pool: Son
       {guesses.map((g, i) => {
         const t = pool.find(p => p.id === g.trackId);
         return (
-          <li key={i} className="flex items-center gap-3 px-4 py-3 bg-card border border-hairline rounded-xl">
+          <li key={i} className="flex items-center gap-3 px-4 py-3 bg-card border border-hairline rounded-xl animate-slide-down">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
               g.correct ? "bg-success/15 text-success" : "bg-muted text-ink-muted"
             }`}>

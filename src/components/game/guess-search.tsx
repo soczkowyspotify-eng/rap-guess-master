@@ -34,7 +34,7 @@ export function GuessSearch({ pool, onSubmit, onSkip, disabled }: Props) {
         />
       </div>
       {open && matches.length > 0 && (
-        <div className="mt-2 bg-card border border-hairline rounded-2xl overflow-hidden shadow-soft">
+        <div className="mt-2 bg-card border border-hairline rounded-2xl overflow-hidden shadow-soft animate-scale-in origin-top">
           {matches.map(s => (
             <button
               key={s.id}
