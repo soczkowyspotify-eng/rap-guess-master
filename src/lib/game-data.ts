@@ -1,6 +1,6 @@
 import { SONGS, type Song } from "@/data/songs";
 import { ALBUMS, type Album } from "@/data/albums";
-import { getYtPool } from "./yt-pool";
+import { getYtPool, getYtAlbums } from "./yt-pool";
 
 export type Difficulty = "easy" | "normal" | "hard";
 
@@ -18,11 +18,12 @@ export function allSongs(): Song[] {
   for (const s of SONGS) map.set(s.id, s);
   for (const a of ALBUMS) for (const s of a.songs) if (!map.has(s.id)) map.set(s.id, s);
   for (const s of getYtPool()) if (!map.has(s.id)) map.set(s.id, s);
+  for (const a of getYtAlbums()) for (const s of a.songs) if (!map.has(s.id)) map.set(s.id, s);
   return Array.from(map.values());
 }
 
-export function albums(): Album[] { return ALBUMS; }
-export function albumById(id: string): Album | undefined { return ALBUMS.find(a => a.id === id); }
+export function albums(): Album[] { return [...getYtAlbums(), ...ALBUMS]; }
+export function albumById(id: string): Album | undefined { return albums().find(a => a.id === id); }
 export function songsForAlbum(id: string): Song[] { return albumById(id)?.songs ?? []; }
 
 // Daily seed — deterministyczny wybór tracku z daty
