@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as YoutubeRouteImport } from './routes/youtube'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as EndlessRouteImport } from './routes/endless'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AlbumsIndexRouteImport } from './routes/albums.index'
 import { Route as AlbumsAlbumIdRouteImport } from './routes/albums.$albumId'
 
+const YoutubeRoute = YoutubeRouteImport.update({
+  id: '/youtube',
+  path: '/youtube',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/youtube': typeof YoutubeRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums/': typeof AlbumsIndexRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/youtube': typeof YoutubeRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums': typeof AlbumsIndexRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/youtube': typeof YoutubeRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums/': typeof AlbumsIndexRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/endless'
     | '/settings'
     | '/stats'
+    | '/youtube'
     | '/albums/$albumId'
     | '/albums/'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/endless'
     | '/settings'
     | '/stats'
+    | '/youtube'
     | '/albums/$albumId'
     | '/albums'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/endless'
     | '/settings'
     | '/stats'
+    | '/youtube'
     | '/albums/$albumId'
     | '/albums/'
   fileRoutesById: FileRoutesById
@@ -117,12 +129,20 @@ export interface RootRouteChildren {
   EndlessRoute: typeof EndlessRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
+  YoutubeRoute: typeof YoutubeRoute
   AlbumsAlbumIdRoute: typeof AlbumsAlbumIdRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/youtube': {
+      id: '/youtube'
+      path: '/youtube'
+      fullPath: '/youtube'
+      preLoaderRoute: typeof YoutubeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stats': {
       id: '/stats'
       path: '/stats'
@@ -181,9 +201,19 @@ const rootRouteChildren: RootRouteChildren = {
   EndlessRoute: EndlessRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
+  YoutubeRoute: YoutubeRoute,
   AlbumsAlbumIdRoute: AlbumsAlbumIdRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

@@ -9,6 +9,7 @@ const NAV = [
   { to: "/daily", label: "Daily" },
   { to: "/endless", label: "Endless" },
   { to: "/albums", label: "Albumy" },
+  { to: "/youtube", label: "YouTube" },
   { to: "/stats", label: "Statystyki" },
   { to: "/settings", label: "Ustawienia" },
 ] as const;
