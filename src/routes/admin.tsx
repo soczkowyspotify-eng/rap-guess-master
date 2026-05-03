@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
-import { addYtTrack, deleteYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum } from "@/server/admin.functions";
+import { addYtTrack, deleteYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
-import { Trash2, Lock, Plus, Music, Disc3, X } from "lucide-react";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
@@ -36,6 +36,7 @@ function AdminPage() {
   const del = useServerFn(deleteYtTrack);
   const addAlb = useServerFn(addYtAlbum);
   const delAlb = useServerFn(deleteYtAlbum);
+  const updAlb = useServerFn(updateYtAlbum);
 
   const [tab, setTab] = useState<Tab>("tracks");
 
@@ -56,6 +57,7 @@ function AdminPage() {
     { link: "", artist: "", title: "" },
   ]);
   const [addingAlbum, setAddingAlbum] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Auto-login z localStorage
   useEffect(() => {
@@ -135,22 +137,49 @@ function AdminPage() {
     if (!tracks.length) { toast.error("Dodaj przynajmniej jeden track"); return; }
     setAddingAlbum(true);
     try {
-      await addAlb({ data: {
-        password: pw,
-        cover_url: aCover.trim(),
-        artist: aArtist.trim(),
-        title: aTitle.trim(),
-        year: aYear ? Number(aYear) : null,
-        tracks,
-      } });
-      toast.success("Album dodany");
-      setACover(""); setAArtist(""); setATitle(""); setAYear("");
-      setATracks([{ link: "", artist: "", title: "" }]);
+      if (editingId) {
+        await updAlb({ data: {
+          password: pw, id: editingId,
+          cover_url: aCover.trim(), artist: aArtist.trim(), title: aTitle.trim(),
+          year: aYear ? Number(aYear) : null, tracks,
+        } });
+        toast.success("Album zaktualizowany");
+      } else {
+        await addAlb({ data: {
+          password: pw,
+          cover_url: aCover.trim(),
+          artist: aArtist.trim(),
+          title: aTitle.trim(),
+          year: aYear ? Number(aYear) : null,
+          tracks,
+        } });
+        toast.success("Album dodany");
+      }
+      resetAlbumForm();
       await refresh();
       await loadYtAlbums();
     } catch (err: any) {
       toast.error(err?.message ?? "Błąd");
     } finally { setAddingAlbum(false); }
+  };
+
+  const resetAlbumForm = () => {
+    setEditingId(null);
+    setACover(""); setAArtist(""); setATitle(""); setAYear("");
+    setATracks([{ link: "", artist: "", title: "" }]);
+  };
+
+  const onEditAlbum = (a: AlbumRow) => {
+    setEditingId(a.id);
+    setACover(a.cover_url);
+    setAArtist(a.artist);
+    setATitle(a.title);
+    setAYear(a.year ? String(a.year) : "");
+    const sorted = [...(a.yt_album_tracks ?? [])].sort((x, y) => x.position - y.position);
+    setATracks(sorted.length
+      ? sorted.map((t) => ({ link: `https://music.youtube.com/watch?v=${t.video_id}`, artist: t.artist, title: t.title }))
+      : [{ link: "", artist: "", title: "" }]);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const onDeleteAlbum = async (id: string) => {
@@ -339,9 +368,16 @@ function AdminPage() {
             </div>
 
             <div className="flex justify-end">
-              <button type="submit" disabled={addingAlbum} className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40">
-                <Plus className="h-4 w-4" /> {addingAlbum ? "Dodaję…" : "Dodaj album"}
-              </button>
+              <div className="flex gap-2">
+                {editingId && (
+                  <button type="button" onClick={resetAlbumForm} className="inline-flex items-center gap-2 px-5 h-11 rounded-full border border-hairline text-sm font-medium hover:bg-muted">
+                    Anuluj
+                  </button>
+                )}
+                <button type="submit" disabled={addingAlbum} className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40">
+                  <Plus className="h-4 w-4" /> {addingAlbum ? (editingId ? "Zapisuję…" : "Dodaję…") : (editingId ? "Zapisz zmiany" : "Dodaj album")}
+                </button>
+              </div>
             </div>
           </form>
 
@@ -355,13 +391,16 @@ function AdminPage() {
                 <li className="rounded-2xl border border-hairline px-4 py-8 text-center text-sm text-ink-muted">Brak albumów.</li>
               )}
               {albumRows.map((a) => (
-                <li key={a.id} className="rounded-2xl border border-hairline p-3 bg-paper flex items-center gap-3">
+                <li key={a.id} className={`rounded-2xl border p-3 bg-paper flex items-center gap-3 ${editingId === a.id ? "border-primary" : "border-hairline"}`}>
                   <img src={a.cover_url} alt="" className="h-16 w-16 rounded-lg object-cover bg-card" />
                   <div className="min-w-0 flex-1">
                     <div className="font-medium truncate">{a.title}</div>
                     <div className="text-sm text-ink-muted truncate">{a.artist}{a.year ? ` · ${a.year}` : ""}</div>
                     <div className="text-xs text-ink-muted mt-1">{a.yt_album_tracks?.length ?? 0} tracków</div>
                   </div>
+                  <button onClick={() => onEditAlbum(a)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-muted transition" aria-label="Edytuj">
+                    <Pencil className="h-4 w-4" />
+                  </button>
                   <button onClick={() => onDeleteAlbum(a.id)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted transition" aria-label="Usuń">
                     <Trash2 className="h-4 w-4" />
                   </button>
