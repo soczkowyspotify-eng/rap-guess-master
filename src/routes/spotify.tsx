@@ -62,7 +62,7 @@ function SpotifyPage() {
           <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">Beta</p>
           <h1 className="font-display text-3xl sm:text-5xl mt-2">Z playlisty Spotify</h1>
           <p className="text-ink-muted text-sm sm:text-base mt-3">
-            Wklej link do publicznej playlisty. Gramy 30-sekundowymi preview od Spotify.
+            Wklej link do publicznej playlisty. Tracklista idzie ze Spotify, a próbki dobieramy automatycznie.
           </p>
         </div>
 
@@ -101,7 +101,7 @@ function PlaylistGame({ pl }: { pl: LoadedPlaylist }) {
       <div className="text-center mb-6">
         <p className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">{pl.name}</p>
         <p className="text-xs text-ink-muted mt-1">
-          {pl.withPreview} / {pl.total} tracków z preview
+          {pl.withPreview} / {pl.total} tracków z dostępną próbką
         </p>
       </div>
       <GameBoard game={game} cover={game.track ? pl.covers[game.track.id] : undefined} />
