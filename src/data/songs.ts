@@ -6,7 +6,8 @@ export interface Song {
   title: string;
   artist: string;
   year?: number;
-  type: "url" | "file";
+  type: "url" | "file" | "youtube";
+  /** dla "youtube" trzymamy tu videoId (11 znaków), dla pozostałych URL pliku audio */
   src: string;
 }
 

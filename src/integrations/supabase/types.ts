@@ -14,7 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      yt_tracks: {
+        Row: {
+          artist: string
+          created_at: string
+          id: string
+          title: string
+          video_id: string
+        }
+        Insert: {
+          artist: string
+          created_at?: string
+          id?: string
+          title: string
+          video_id: string
+        }
+        Update: {
+          artist?: string
+          created_at?: string
+          id?: string
+          title?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
