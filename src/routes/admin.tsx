@@ -396,6 +396,10 @@ function AdminPage() {
                   <input value={aTitle} onChange={(e) => setATitle(e.target.value)} placeholder="Tytuł albumu" className="h-11 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                   <input value={aYear} onChange={(e) => setAYear(e.target.value)} placeholder="Rok" inputMode="numeric" className="h-11 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                 </div>
+                <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input type="checkbox" checked={aRecommended} onChange={(e) => setARecommended(e.target.checked)} className="h-4 w-4 accent-primary" />
+                  <span>Rekomendujemy ten album ⭐</span>
+                </label>
               </div>
             </div>
 
@@ -448,7 +452,10 @@ function AdminPage() {
                 <li key={a.id} className={`rounded-2xl border p-3 bg-paper flex items-center gap-3 ${editingId === a.id ? "border-primary" : "border-hairline"}`}>
                   <img src={a.cover_url} alt="" className="h-16 w-16 rounded-lg object-cover bg-card" />
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium truncate">{a.title}</div>
+                    <div className="font-medium truncate flex items-center gap-2">
+                      {a.title}
+                      {a.recommended && <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary text-paper">Polecany</span>}
+                    </div>
                     <div className="text-sm text-ink-muted truncate">{a.artist}{a.year ? ` · ${a.year}` : ""}</div>
                     <div className="text-xs text-ink-muted mt-1">{a.yt_album_tracks?.length ?? 0} tracków</div>
                   </div>
