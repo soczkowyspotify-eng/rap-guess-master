@@ -29,6 +29,7 @@ function extractVid(input: string): string | null {
 interface Row { id: string; video_id: string; artist: string; title: string; created_at: string; }
 interface AlbumRow {
   id: string; cover_url: string; artist: string; title: string; year: number | null; created_at: string;
+  recommended: boolean;
   yt_album_tracks: { id: string; video_id: string; artist: string; title: string; position: number }[];
 }
 
@@ -62,6 +63,7 @@ function AdminPage() {
   const [aArtist, setAArtist] = useState("");
   const [aTitle, setATitle] = useState("");
   const [aYear, setAYear] = useState<string>("");
+  const [aRecommended, setARecommended] = useState(false);
   const [aTracks, setATracks] = useState<{ link: string; artist: string; title: string }[]>([
     { link: "", artist: "", title: "" },
   ]);
@@ -86,7 +88,7 @@ function AdminPage() {
     setRows((t ?? []) as Row[]);
     const { data: a } = await supabase
       .from("yt_albums")
-      .select("id, cover_url, artist, title, year, created_at, yt_album_tracks(id, video_id, artist, title, position)")
+      .select("id, cover_url, artist, title, year, recommended, created_at, yt_album_tracks(id, video_id, artist, title, position)")
       .order("created_at", { ascending: false });
     setAlbumRows((a ?? []) as unknown as AlbumRow[]);
   };
@@ -175,7 +177,7 @@ function AdminPage() {
         await updAlb({ data: {
           password: pw, id: editingId,
           cover_url: aCover.trim(), artist: aArtist.trim(), title: aTitle.trim(),
-          year: aYear ? Number(aYear) : null, tracks,
+          year: aYear ? Number(aYear) : null, recommended: aRecommended, tracks,
         } });
         toast.success("Album zaktualizowany");
       } else {
@@ -185,6 +187,7 @@ function AdminPage() {
           artist: aArtist.trim(),
           title: aTitle.trim(),
           year: aYear ? Number(aYear) : null,
+          recommended: aRecommended,
           tracks,
         } });
         toast.success("Album dodany");
@@ -200,6 +203,7 @@ function AdminPage() {
   const resetAlbumForm = () => {
     setEditingId(null);
     setACover(""); setAArtist(""); setATitle(""); setAYear("");
+    setARecommended(false);
     setATracks([{ link: "", artist: "", title: "" }]);
   };
 
@@ -209,6 +213,7 @@ function AdminPage() {
     setAArtist(a.artist);
     setATitle(a.title);
     setAYear(a.year ? String(a.year) : "");
+    setARecommended(!!a.recommended);
     const sorted = [...(a.yt_album_tracks ?? [])].sort((x, y) => x.position - y.position);
     setATracks(sorted.length
       ? sorted.map((t) => ({ link: `https://music.youtube.com/watch?v=${t.video_id}`, artist: t.artist, title: t.title }))
