@@ -19,6 +19,13 @@ export const Route = createFileRoute("/admin")({
 
 const PW_KEY = "rg.admin.pw";
 
+function extractVid(input: string): string | null {
+  const t = input.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return t;
+  const m = t.match(/(?:v=|youtu\.be\/|\/embed\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
 interface Row { id: string; video_id: string; artist: string; title: string; created_at: string; }
 interface AlbumRow {
   id: string; cover_url: string; artist: string; title: string; year: number | null; created_at: string;
