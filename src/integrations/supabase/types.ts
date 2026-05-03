@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           id: string
           position: number
+          start_sec: number
           title: string
           video_id: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           id?: string
           position?: number
+          start_sec?: number
           title: string
           video_id: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           created_at?: string
           id?: string
           position?: number
+          start_sec?: number
           title?: string
           video_id?: string
         }
