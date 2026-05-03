@@ -19,6 +19,13 @@ export const Route = createFileRoute("/admin")({
 
 const PW_KEY = "rg.admin.pw";
 
+function extractVid(input: string): string | null {
+  const t = input.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return t;
+  const m = t.match(/(?:v=|youtu\.be\/|\/embed\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
 interface Row { id: string; video_id: string; artist: string; title: string; created_at: string; }
 interface AlbumRow {
   id: string; cover_url: string; artist: string; title: string; year: number | null; created_at: string;
@@ -155,6 +162,13 @@ function AdminPage() {
       .map((t) => ({ link: t.link.trim(), artist: t.artist.trim(), title: t.title.trim() }))
       .filter((t) => t.link && t.artist && t.title);
     if (!tracks.length) { toast.error("Dodaj przynajmniej jeden track"); return; }
+    const ids = tracks.map((t) => extractVid(t.link)).filter(Boolean) as string[];
+    const dupIdx = ids.findIndex((id, i) => ids.indexOf(id) !== i);
+    if (dupIdx !== -1) {
+      const first = ids.indexOf(ids[dupIdx]);
+      toast.error(`Duplikat linku: track #${first + 1} i #${dupIdx + 1} mają ten sam film`);
+      return;
+    }
     setAddingAlbum(true);
     try {
       if (editingId) {
