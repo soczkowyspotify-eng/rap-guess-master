@@ -69,8 +69,8 @@ function Index() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="flex justify-center order-first md:order-last"
           >
-            <Vinyl spinning size={240} className="sm:hidden" />
-            <Vinyl spinning size={360} className="hidden sm:block" />
+            <div className="sm:hidden"><Vinyl spinning size={240} /></div>
+            <div className="hidden sm:block"><Vinyl spinning size={360} /></div>
           </motion.div>
         </section>
 
