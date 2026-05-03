@@ -299,13 +299,20 @@ function AdminPage() {
           </div>
           <div className="flex justify-between items-center">
             <p className="text-xs text-ink-muted">Najlepiej linki z <strong>music.youtube.com</strong> (brak intra teledysku).</p>
-            <button
-              type="submit"
-              disabled={adding}
-              className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40"
-            >
-              <Plus className="h-4 w-4" /> {adding ? "Dodaję…" : "Dodaj"}
-            </button>
+            <div className="flex gap-2">
+              {editingTrackId && (
+                <button type="button" onClick={resetTrackForm} className="inline-flex items-center gap-2 px-5 h-11 rounded-full border border-hairline text-sm font-medium hover:bg-muted">
+                  Anuluj
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={adding}
+                className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40"
+              >
+                <Plus className="h-4 w-4" /> {adding ? (editingTrackId ? "Zapisuję…" : "Dodaję…") : (editingTrackId ? "Zapisz zmiany" : "Dodaj")}
+              </button>
+            </div>
           </div>
         </form>
 
@@ -382,7 +389,8 @@ function AdminPage() {
               </div>
               <div className="space-y-2">
                 {aTracks.map((t, i) => (
-                  <div key={i} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_36px] gap-2">
+                  <div key={i} className="grid grid-cols-1 md:grid-cols-[28px_1fr_1fr_1fr_36px] gap-2 items-center">
+                    <div className="text-sm font-mono text-ink-muted text-center">{i + 1}.</div>
                     <input value={t.link} onChange={(e) => updateTrack(i, "link", e.target.value)} placeholder="Link YT Music" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                     <input value={t.artist} onChange={(e) => updateTrack(i, "artist", e.target.value)} placeholder="Artyści (po przecinku)" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
                     <input value={t.title} onChange={(e) => updateTrack(i, "title", e.target.value)} placeholder="Tytuł" className="h-10 px-3 rounded-lg border border-hairline bg-paper outline-none focus:border-primary text-sm" />
