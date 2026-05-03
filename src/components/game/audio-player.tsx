@@ -19,7 +19,6 @@ export function useAudioPlayer({ song, durationSec, onEnd, onPlayingChange, star
   useEffect(() => {
     const el = new Audio(song.src);
     el.preload = "auto";
-    el.crossOrigin = "anonymous";
     ref.current = el;
     return () => {
       el.pause();
