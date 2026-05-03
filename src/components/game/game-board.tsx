@@ -20,6 +20,7 @@ export function GameBoard({ game, cover, hideAnswerOnLoss = false }: Props) {
   const player = useAudioPlayer({
     song: game.track!,
     durationSec: game.currentDuration,
+    startSec: game.track?.startSec ?? 0,
   });
 
   // Reset playera gdy zmienia się track
