@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n, LANGS, type LangPref } from "@/i18n/i18n";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Ustawienia — RAP GUESSER" }, { name: "description", content: "Trudność, motyw, reset postępu." }] }),
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/settings")({
 function SettingsPage() {
   const [diff, setDiff] = useState<Difficulty>(() => Storage.getSettings().difficulty);
   const { theme, setTheme } = useTheme();
+  const { t, pref, setPref } = useI18n();
 
   const change = (d: Difficulty) => {
     setDiff(d);
@@ -23,9 +25,9 @@ function SettingsPage() {
   };
 
   const reset = () => {
-    if (!confirm("Skasować cały postęp? Tej akcji nie można cofnąć.")) return;
+    if (!confirm(t("settings.danger.confirm"))) return;
     Storage.resetAll();
-    toast.success("Postęp skasowany");
+    toast.success(t("settings.danger.toast"));
     setTimeout(() => location.reload(), 500);
   };
 
@@ -34,17 +36,17 @@ function SettingsPage() {
       <AppHeader />
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-10 sm:space-y-12">
         <header>
-          <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">Ustawienia</p>
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl mt-2">Konfiguracja</h1>
+          <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">{t("settings.tag")}</p>
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl mt-2">{t("settings.title")}</h1>
         </header>
 
         <section>
-          <h2 className="font-display text-xl mb-4">Motyw</h2>
+          <h2 className="font-display text-xl mb-4">{t("settings.theme")}</h2>
           <div className="grid grid-cols-3 gap-3">
             {([
-              { id: "light", label: "Jasny", icon: Sun },
-              { id: "dark", label: "Ciemny", icon: Moon },
-              { id: "system", label: "Systemowy", icon: Monitor },
+              { id: "light", label: t("settings.theme.light"), icon: Sun },
+              { id: "dark", label: t("settings.theme.dark"), icon: Moon },
+              { id: "system", label: t("settings.theme.system"), icon: Monitor },
             ] as const).map(opt => {
               const active = theme === opt.id;
               const Icon = opt.icon;
@@ -66,8 +68,40 @@ function SettingsPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl mb-4">Trudność (Endless · Album)</h2>
-          <p className="text-sm text-ink-muted mb-4">Daily zawsze gra na Normal — żeby wynik był uczciwy dla wszystkich.</p>
+          <h2 className="font-display text-xl mb-4">{t("settings.lang")}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <button
+              onClick={() => setPref("auto")}
+              className={cn(
+                "flex flex-col items-center gap-2 p-4 rounded-2xl border transition",
+                pref === "auto" ? "border-ink bg-card shadow-soft" : "border-hairline hover:border-ink/40",
+              )}
+            >
+              <span className="text-2xl">🌐</span>
+              <span className="text-sm">{t("settings.lang.auto")}</span>
+            </button>
+            {LANGS.map(l => {
+              const active = pref === l.code;
+              return (
+                <button
+                  key={l.code}
+                  onClick={() => setPref(l.code as LangPref)}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-2xl border transition",
+                    active ? "border-ink bg-card shadow-soft" : "border-hairline hover:border-ink/40",
+                  )}
+                >
+                  <span className="text-2xl">{l.flag}</span>
+                  <span className="text-sm">{l.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="font-display text-xl mb-4">{t("settings.diff")}</h2>
+          <p className="text-sm text-ink-muted mb-4">{t("settings.diff.note")}</p>
           <div className="grid sm:grid-cols-3 gap-3">
             {(Object.keys(DIFFICULTY) as Difficulty[]).map(d => {
               const conf = DIFFICULTY[d];
@@ -79,8 +113,8 @@ function SettingsPage() {
                   className={`text-left p-5 rounded-2xl border transition ${active ? "border-ink bg-card shadow-soft" : "border-hairline hover:border-ink/40"}`}
                 >
                   <div className="font-display text-xl">{conf.label}</div>
-                  <div className="text-xs font-mono text-ink-muted mt-2">{conf.attempts} prób</div>
-                  <div className="text-xs font-mono text-ink-muted">start {conf.durations[0]}s</div>
+                  <div className="text-xs font-mono text-ink-muted mt-2">{conf.attempts} {t("settings.diff.attempts")}</div>
+                  <div className="text-xs font-mono text-ink-muted">{t("settings.diff.start")} {conf.durations[0]}s</div>
                 </button>
               );
             })}
@@ -88,10 +122,10 @@ function SettingsPage() {
         </section>
 
         <section className="border-t border-hairline pt-8">
-          <h2 className="font-display text-xl mb-3 text-primary">Strefa zagrożenia</h2>
-          <p className="text-sm text-ink-muted mb-4">Skasuje wszystkie statystyki, daily, postęp albumów i osiągnięcia.</p>
+          <h2 className="font-display text-xl mb-3 text-primary">{t("settings.danger")}</h2>
+          <p className="text-sm text-ink-muted mb-4">{t("settings.danger.desc")}</p>
           <button onClick={reset} className="px-5 h-10 rounded-full border border-primary text-primary text-sm hover:bg-primary hover:text-paper transition">
-            Reset całego postępu
+            {t("settings.danger.cta")}
           </button>
         </section>
       </main>
