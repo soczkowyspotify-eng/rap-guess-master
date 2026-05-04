@@ -1082,15 +1082,6 @@ export const SONGS_DB = [
   },    
 
   {
-    id: 'sc_0117',
-    title: 'CHA CHA',
-    artist: 'Sobel',
-
-    type: 'url',
-    src: 'https://pub-8247d6c452064a33b8f98ab2cc36e7e1.r2.dev/1/CHA%20CHA.mp3'
-  },  
-
-  {
     id: 'sc_0118',
     title: 'cotton candy',
     artist: 'Hubert.',

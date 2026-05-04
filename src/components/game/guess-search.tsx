@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import type { Song } from "@/data/songs";
-import { fuzzyMatch } from "@/lib/game-data";
+import { dedupeSongs, fuzzyMatch } from "@/lib/game-data";
 
 interface Props {
   pool: Song[];
@@ -16,7 +16,7 @@ export function GuessSearch({ pool, onSubmit, onSkip, disabled }: Props) {
 
   const matches = useMemo(() => {
     if (!q.trim()) return [];
-    return pool.filter(s => fuzzyMatch(q, s)).slice(0, 8);
+    return dedupeSongs(pool.filter(s => fuzzyMatch(q, s))).slice(0, 8);
   }, [q, pool]);
 
   return (
