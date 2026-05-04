@@ -3,20 +3,23 @@ import { Disc3, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useI18n } from "@/i18n/i18n";
 
 const NAV = [
-  { to: "/", label: "Start" },
-  { to: "/daily", label: "Daily" },
-  { to: "/endless", label: "Endless" },
-  { to: "/albums", label: "Albumy" },
-  { to: "/suggest", label: "Zaproponuj" },
-  { to: "/stats", label: "Statystyki" },
-  { to: "/settings", label: "Ustawienia" },
+  { to: "/", key: "nav.start" },
+  { to: "/daily", key: "nav.daily" },
+  { to: "/endless", key: "nav.endless" },
+  { to: "/albums", key: "nav.albums" },
+  { to: "/suggest", key: "nav.suggest" },
+  { to: "/stats", key: "nav.stats" },
+  { to: "/settings", key: "nav.settings" },
 ] as const;
 
 export function AppHeader() {
   const path = useRouterState({ select: r => r.location.pathname });
   const [open, setOpen] = useState(false);
+  const { t } = useI18n();
   useEffect(() => { setOpen(false); }, [path]);
 
   return (
@@ -38,19 +41,20 @@ export function AppHeader() {
                   active ? "bg-ink text-paper" : "text-ink-muted hover:text-ink",
                 )}
               >
-                {item.label}
+                {t(item.key)}
               </Link>
             );
           })}
           <Link to="/settings" className="ml-2 px-3 py-1.5 text-sm text-ink-muted hover:text-ink">
-            Ustawienia
+            {t("nav.settings")}
           </Link>
         </nav>
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <ThemeToggle />
           <button
             onClick={() => setOpen(o => !o)}
-            aria-label={open ? "Zamknij menu" : "Otwórz menu"}
+            aria-label={open ? t("menu.close") : t("menu.open")}
             className="md:hidden h-9 w-9 inline-flex items-center justify-center rounded-full border border-hairline text-ink hover:border-ink/50 transition"
           >
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -71,7 +75,7 @@ export function AppHeader() {
                     active ? "bg-ink text-paper" : "text-ink hover:bg-muted",
                   )}
                 >
-                  {item.label}
+                  {t(item.key)}
                 </Link>
               );
             })}
