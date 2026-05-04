@@ -96,6 +96,7 @@ function AdminPage() {
   const [legacyEdits, setLegacyEdits] = useState<Record<string, { startSec: string; hidden: boolean }>>({});
   const [legacySearch, setLegacySearch] = useState("");
   const [legacySavingId, setLegacySavingId] = useState<string | null>(null);
+  const [legacyPreview, setLegacyPreview] = useState<string | null>(null);
 
   // ===== YT Import state =====
   type ImportRow = YtFetchedTrack & { include: boolean; startSec: string };
