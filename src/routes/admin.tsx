@@ -2,10 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
-import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement, deleteSuggestion } from "@/server/admin.functions";
+import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement, deleteSuggestion, upsertLegacyOverride, resetLegacyOverride } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
-import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink, Youtube, Search, Play } from "lucide-react";
+import { loadYtTracks, loadYtAlbums, loadLegacyOverrides } from "@/lib/yt-pool";
+import { RAW_LEGACY_SONGS } from "@/data/songs";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink, Youtube, Search, Play, Archive, EyeOff as EyeOffIcon } from "lucide-react";
 import { toast } from "sonner";
 import { fetchFromYoutube, type YtFetchedTrack } from "@/server/youtube.functions";
 
@@ -49,7 +50,7 @@ interface SuggestionRow {
   id: string; artist: string; title: string; link: string | null; created_at: string;
 }
 
-type Tab = "tracks" | "albums" | "announcements" | "suggestions" | "ytimport";
+type Tab = "tracks" | "albums" | "announcements" | "suggestions" | "ytimport" | "legacy";
 
 function AdminPage() {
   const [pw, setPw] = useState("");
