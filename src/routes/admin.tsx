@@ -5,8 +5,9 @@ import { AppHeader } from "@/components/app-header";
 import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement, deleteSuggestion } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
-import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink } from "lucide-react";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink, Youtube, Search, Play } from "lucide-react";
 import { toast } from "sonner";
+import { fetchFromYoutube, type YtFetchedTrack } from "@/server/youtube.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [
@@ -48,7 +49,7 @@ interface SuggestionRow {
   id: string; artist: string; title: string; link: string | null; created_at: string;
 }
 
-type Tab = "tracks" | "albums" | "announcements" | "suggestions";
+type Tab = "tracks" | "albums" | "announcements" | "suggestions" | "ytimport";
 
 function AdminPage() {
   const [pw, setPw] = useState("");
@@ -65,6 +66,7 @@ function AdminPage() {
   const delAnn = useServerFn(deleteAnnouncement);
   const togAnn = useServerFn(toggleAnnouncement);
   const delSug = useServerFn(deleteSuggestion);
+  const ytFetch = useServerFn(fetchFromYoutube);
 
   const [tab, setTab] = useState<Tab>("tracks");
 
@@ -78,6 +80,16 @@ function AdminPage() {
   const [albumRows, setAlbumRows] = useState<AlbumRow[]>([]);
   const [annRows, setAnnRows] = useState<AnnouncementRow[]>([]);
   const [sugRows, setSugRows] = useState<SuggestionRow[]>([]);
+
+  // ===== YT Import state =====
+  type ImportRow = YtFetchedTrack & { include: boolean; startSec: string };
+  const [ytLink, setYtLink] = useState("");
+  const [ytFetching, setYtFetching] = useState(false);
+  const [ytKind, setYtKind] = useState<"video" | "playlist" | null>(null);
+  const [ytRows, setYtRows] = useState<ImportRow[]>([]);
+  const [ytAlbum, setYtAlbum] = useState<{ title: string; artist: string; cover_url: string; year: string; recommended: boolean }>({ title: "", artist: "", cover_url: "", year: "", recommended: false });
+  const [ytPreview, setYtPreview] = useState<string | null>(null); // video_id
+  const [ytSaving, setYtSaving] = useState(false);
 
   // Announcement form
   const [annTitle, setAnnTitle] = useState("");
@@ -324,6 +336,84 @@ function AdminPage() {
     } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
   };
 
+  // ===== YT Import handlers =====
+  const onYtFetch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ytLink.trim()) { toast.error("Wklej link YouTube"); return; }
+    setYtFetching(true);
+    setYtPreview(null);
+    try {
+      const res = await ytFetch({ data: { password: pw, link: ytLink.trim() } });
+      setYtKind(res.type);
+      setYtRows(res.tracks.map((t) => ({ ...t, include: true, startSec: "" })));
+      if (res.type === "playlist" && res.albumMeta) {
+        setYtAlbum({
+          title: res.albumMeta.title,
+          artist: res.albumMeta.artist,
+          cover_url: res.albumMeta.cover_url,
+          year: res.albumMeta.year ? String(res.albumMeta.year) : "",
+          recommended: false,
+        });
+      } else {
+        setYtAlbum({ title: "", artist: "", cover_url: "", year: "", recommended: false });
+      }
+      toast.success(res.type === "playlist" ? `Pobrano album (${res.tracks.length} tracków)` : "Pobrano utwór");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd pobierania z YouTube");
+    } finally { setYtFetching(false); }
+  };
+
+  const updateYtRow = (i: number, key: keyof ImportRow, val: any) => {
+    setYtRows((p) => p.map((r, idx) => idx === i ? { ...r, [key]: val } : r));
+  };
+
+  const onYtClear = () => {
+    setYtKind(null); setYtRows([]); setYtPreview(null); setYtLink("");
+    setYtAlbum({ title: "", artist: "", cover_url: "", year: "", recommended: false });
+  };
+
+  const onYtSaveTracks = async () => {
+    const sel = ytRows.filter((r) => r.include && r.artist.trim() && r.parsedTitle.trim());
+    if (!sel.length) { toast.error("Zaznacz przynajmniej jeden track z wypełnionymi polami"); return; }
+    setYtSaving(true);
+    let ok = 0, fail = 0;
+    for (const r of sel) {
+      try {
+        await add({ data: { password: pw, link: r.video_id, artist: r.artist.trim(), title: r.parsedTitle.trim() } });
+        ok++;
+      } catch { fail++; }
+    }
+    setYtSaving(false);
+    toast[fail ? "warning" : "success"](`Zapisano ${ok}${fail ? `, błędów: ${fail}` : ""}`);
+    await refresh(); await loadYtTracks();
+    if (!fail) onYtClear();
+  };
+
+  const onYtSaveAlbum = async () => {
+    const sel = ytRows.filter((r) => r.include && r.artist.trim() && r.parsedTitle.trim());
+    if (!sel.length) { toast.error("Zaznacz przynajmniej jeden track"); return; }
+    if (!ytAlbum.cover_url.trim() || !ytAlbum.artist.trim() || !ytAlbum.title.trim()) {
+      toast.error("Uzupełnij okładkę, artystę i tytuł albumu"); return;
+    }
+    setYtSaving(true);
+    try {
+      await addAlb({ data: {
+        password: pw,
+        cover_url: ytAlbum.cover_url.trim(),
+        artist: ytAlbum.artist.trim(),
+        title: ytAlbum.title.trim(),
+        year: ytAlbum.year ? Number(ytAlbum.year) : null,
+        recommended: ytAlbum.recommended,
+        tracks: sel.map((r) => ({ link: r.video_id, artist: r.artist.trim(), title: r.parsedTitle.trim(), start_sec: parseStart(r.startSec) })),
+      } });
+      toast.success("Album dodany");
+      await refresh(); await loadYtAlbums();
+      onYtClear();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd zapisu albumu");
+    } finally { setYtSaving(false); }
+  };
+
   if (!authed) {
     return (
       <div className="min-h-screen bg-paper">
@@ -384,6 +474,10 @@ function AdminPage() {
               onClick={() => setTab("suggestions")}
               className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "suggestions" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
             ><Lightbulb className="h-4 w-4" /> Propozycje{sugRows.length > 0 && <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] rounded-full bg-primary text-paper">{sugRows.length}</span>}</button>
+            <button
+              onClick={() => setTab("ytimport")}
+              className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "ytimport" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
+            ><Youtube className="h-4 w-4" /> YT Import <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/20 text-primary">BETA</span></button>
           </div>
         </div>
 
@@ -664,6 +758,116 @@ function AdminPage() {
               ))}
             </ul>
           </section>
+        </>)}
+
+        {tab === "ytimport" && (<>
+          <div className="rounded-3xl border border-hairline p-5 sm:p-6 bg-card space-y-3">
+            <div className="flex items-start gap-3">
+              <Youtube className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <div className="text-sm text-ink-muted">
+                Wklej link do <strong>filmu YouTube</strong> (pojedynczy track) lub <strong>playlisty/albumu</strong> (np. z YouTube Music — link zaczyna się od <code className="font-mono text-xs">OLAK5uy_...</code>). System pobierze tytuł, artystę, okładkę i listę tracków. <strong>Sprawdź wszystko przed zapisem</strong> — heurystyka splitu „Artist - Title" nie zawsze trafia.
+              </div>
+            </div>
+            <form onSubmit={onYtFetch} className="flex gap-2">
+              <input
+                value={ytLink}
+                onChange={(e) => setYtLink(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=... lub https://music.youtube.com/playlist?list=OLAK5uy_..."
+                className="flex-1 h-11 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm"
+              />
+              <button type="submit" disabled={ytFetching} className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40">
+                <Search className="h-4 w-4" /> {ytFetching ? "Pobieram…" : "Pobierz"}
+              </button>
+            </form>
+          </div>
+
+          {ytKind && ytRows.length > 0 && (
+            <>
+              {ytKind === "playlist" && (
+                <section className="rounded-3xl border border-hairline p-5 sm:p-6 bg-card space-y-3">
+                  <h3 className="font-display text-lg flex items-center gap-2"><Disc3 className="h-4 w-4" /> Metadane albumu</h3>
+                  <div className="flex gap-4">
+                    {ytAlbum.cover_url && <img src={ytAlbum.cover_url} alt="" className="h-24 w-24 rounded-xl object-cover bg-paper border border-hairline shrink-0" />}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <input value={ytAlbum.title} onChange={(e) => setYtAlbum((p) => ({ ...p, title: e.target.value }))} placeholder="Tytuł albumu" className="h-10 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm" />
+                      <input value={ytAlbum.artist} onChange={(e) => setYtAlbum((p) => ({ ...p, artist: e.target.value }))} placeholder="Artysta" className="h-10 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm" />
+                      <input value={ytAlbum.cover_url} onChange={(e) => setYtAlbum((p) => ({ ...p, cover_url: e.target.value }))} placeholder="URL okładki" className="h-10 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm md:col-span-2 font-mono text-xs" />
+                      <input value={ytAlbum.year} onChange={(e) => setYtAlbum((p) => ({ ...p, year: e.target.value.replace(/\D/g, "") }))} placeholder="Rok" className="h-10 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm" />
+                      <label className="inline-flex items-center gap-2 text-sm">
+                        <input type="checkbox" checked={ytAlbum.recommended} onChange={(e) => setYtAlbum((p) => ({ ...p, recommended: e.target.checked }))} />
+                        Polecany
+                      </label>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              <section className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-lg">{ytRows.length} {ytRows.length === 1 ? "track" : "tracków"} z YT</h3>
+                  <button onClick={onYtClear} className="text-xs text-ink-muted hover:text-ink underline underline-offset-4">Wyczyść</button>
+                </div>
+                <ul className="space-y-2">
+                  {ytRows.map((r, i) => (
+                    <li key={r.video_id + i} className={`rounded-2xl border p-3 bg-paper ${r.include ? "border-hairline" : "border-hairline/40 opacity-50"}`}>
+                      <div className="flex gap-3 items-start">
+                        <input type="checkbox" checked={r.include} onChange={(e) => updateYtRow(i, "include", e.target.checked)} className="mt-2" />
+                        <img src={r.thumbnail} alt="" className="h-14 w-14 rounded-lg object-cover bg-card shrink-0" />
+                        <div className="min-w-0 flex-1 space-y-1.5">
+                          <div className="text-[11px] font-mono text-ink-muted truncate" title={r.title}>YT: {r.title} · <span className="opacity-70">{r.channel}</span></div>
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_80px] gap-1.5">
+                            <input value={r.artist} onChange={(e) => updateYtRow(i, "artist", e.target.value)} placeholder="Artysta" className="h-9 px-2.5 rounded-lg border border-hairline bg-card outline-none focus:border-primary text-sm" />
+                            <input value={r.parsedTitle} onChange={(e) => updateYtRow(i, "parsedTitle", e.target.value)} placeholder="Tytuł" className="h-9 px-2.5 rounded-lg border border-hairline bg-card outline-none focus:border-primary text-sm" />
+                            {ytKind === "playlist" && (
+                              <input value={r.startSec} onChange={(e) => updateYtRow(i, "startSec", e.target.value)} placeholder="Start (s)" title="Sekunda startu sample'a (opcjonalnie)" className="h-9 px-2.5 rounded-lg border border-hairline bg-card outline-none focus:border-primary text-sm font-mono" />
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setYtPreview(ytPreview === r.video_id ? null : r.video_id)}
+                          className={`h-9 w-9 rounded-full inline-flex items-center justify-center shrink-0 transition ${ytPreview === r.video_id ? "bg-primary text-paper" : "text-ink-muted hover:text-ink hover:bg-muted"}`}
+                          aria-label="Odsłuchaj"
+                          title="Odsłuchaj"
+                        >
+                          <Play className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {ytPreview === r.video_id && (
+                        <div className="mt-3 rounded-xl overflow-hidden bg-black aspect-video">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${r.video_id}?autoplay=1`}
+                            title={r.title}
+                            allow="autoplay; encrypted-media"
+                            allowFullScreen
+                            className="w-full h-full border-0"
+                          />
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <div className="sticky bottom-4 flex justify-end gap-2 z-10">
+                <button onClick={onYtClear} className="px-5 h-11 rounded-full border border-hairline bg-card text-sm hover:bg-muted">Anuluj</button>
+                {ytKind === "video" ? (
+                  <button onClick={onYtSaveTracks} disabled={ytSaving} className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40 shadow-lg">
+                    <Plus className="h-4 w-4" /> {ytSaving ? "Zapisuję…" : `Zapisz jako track${ytRows.filter(r => r.include).length > 1 ? "i" : ""}`}
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={onYtSaveTracks} disabled={ytSaving} className="inline-flex items-center gap-2 px-5 h-11 rounded-full border border-hairline bg-card text-sm font-medium hover:bg-muted disabled:opacity-40">
+                      <Music className="h-4 w-4" /> Zapisz jako pojedyncze tracki
+                    </button>
+                    <button onClick={onYtSaveAlbum} disabled={ytSaving} className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40 shadow-lg">
+                      <Disc3 className="h-4 w-4" /> {ytSaving ? "Zapisuję…" : "Zapisz jako album"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </>)}
       </main>
     </div>
