@@ -86,7 +86,12 @@ function artistParts(artist: string): string[] {
 export function fuzzyMatch(query: string, song: Song): boolean {
   const q = normalize(query);
   if (!q) return false;
-  return normalize(song.title).includes(q) || normalize(song.artist).includes(q);
+  const hay = `${normalize(song.title)} ${normalize(song.artist)}${song.year ? ` ${song.year}` : ""}`;
+  if (hay.includes(q)) return true;
+  // tokenowy AND — każdy fragment zapytania musi wystąpić w title+artist (w dowolnej kolejności)
+  const tokens = q.split(" ").filter(Boolean);
+  if (tokens.length <= 1) return false;
+  return tokens.every((tok) => hay.includes(tok));
 }
 
 /** Klucz "ten sam utwór" — normalizowany artysta + tytuł. */
