@@ -541,6 +541,76 @@ function AdminPage() {
             </ul>
           </section>
         </>)}
+
+        {tab === "announcements" && (<>
+          <form onSubmit={onAddAnnouncement} className="rounded-3xl border border-hairline p-5 sm:p-6 space-y-3 bg-card">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted flex items-center gap-2">
+              <Megaphone className="h-3.5 w-3.5" /> Nowy popup dla użytkowników
+            </p>
+            <input
+              value={annTitle}
+              onChange={(e) => setAnnTitle(e.target.value)}
+              placeholder="Tytuł"
+              className="w-full h-11 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm"
+            />
+            <textarea
+              value={annBody}
+              onChange={(e) => setAnnBody(e.target.value)}
+              placeholder="Tekst ogłoszenia (możesz wstawiać nowe linie)"
+              rows={5}
+              className="w-full px-3 py-2 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm resize-y"
+            />
+            <input
+              value={annImage}
+              onChange={(e) => setAnnImage(e.target.value)}
+              placeholder="URL grafiki (opcjonalnie)"
+              className="w-full h-11 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm"
+            />
+            {annImage && (
+              <img src={annImage} alt="" className="max-h-40 rounded-xl border border-hairline object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
+            )}
+            <div className="flex items-center justify-between">
+              <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input type="checkbox" checked={annActive} onChange={(e) => setAnnActive(e.target.checked)} className="h-4 w-4 accent-primary" />
+                <span>Aktywne (pokazuj userom)</span>
+              </label>
+              <button type="submit" disabled={savingAnn} className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40">
+                <Plus className="h-4 w-4" /> {savingAnn ? "Zapisuję…" : "Opublikuj"}
+              </button>
+            </div>
+            <p className="text-xs text-ink-muted">Najnowsze aktywne ogłoszenie pokaże się każdemu userowi raz (po jego zamknięciu nie wróci).</p>
+          </form>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl">{annRows.length} {annRows.length === 1 ? "ogłoszenie" : "ogłoszeń"}</h2>
+              <button onClick={refresh} className="text-xs text-ink-muted hover:text-ink underline underline-offset-4">Odśwież</button>
+            </div>
+            <ul className="space-y-3">
+              {annRows.length === 0 && (
+                <li className="rounded-2xl border border-hairline px-4 py-8 text-center text-sm text-ink-muted">Brak ogłoszeń.</li>
+              )}
+              {annRows.map((a) => (
+                <li key={a.id} className={`rounded-2xl border p-4 bg-paper flex gap-3 items-start ${a.active ? "border-primary/40" : "border-hairline opacity-70"}`}>
+                  {a.image_url && <img src={a.image_url} alt="" className="h-16 w-16 rounded-lg object-cover bg-card shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate flex items-center gap-2">
+                      {a.title}
+                      {a.active && <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary text-paper">Live</span>}
+                    </div>
+                    <div className="text-sm text-ink-muted line-clamp-2 whitespace-pre-line">{a.body}</div>
+                  </div>
+                  <button onClick={() => onToggleAnnouncement(a.id, !a.active)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-muted transition" aria-label="Przełącz">
+                    {a.active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                  <button onClick={() => onDeleteAnnouncement(a.id)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted transition" aria-label="Usuń">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>)}
       </main>
     </div>
   );
