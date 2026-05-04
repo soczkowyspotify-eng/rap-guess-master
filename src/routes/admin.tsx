@@ -37,6 +37,13 @@ function parseStart(input: string): number {
   return 0;
 }
 
+function formatSec(s: number): string {
+  if (!s) return "";
+  const m = Math.floor(s / 60);
+  const ss = s % 60;
+  return m > 0 ? `${m}:${String(ss).padStart(2, "0")}` : String(ss);
+}
+
 interface Row { id: string; video_id: string; artist: string; title: string; created_at: string; }
 interface AlbumRow {
   id: string; cover_url: string; artist: string; title: string; year: number | null; created_at: string;
