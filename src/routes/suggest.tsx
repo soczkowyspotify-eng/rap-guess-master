@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/app-header";
 import { supabase } from "@/integrations/supabase/client";
 import { Lightbulb, Send, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/i18n";
 
 export const Route = createFileRoute("/suggest")({
   head: () => ({ meta: [
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/suggest")({
 });
 
 function SuggestPage() {
+  const { t } = useI18n();
   const [artist, setArtist] = useState("");
   const [title, setTitle] = useState("");
   const [link, setLink] = useState("");
@@ -25,19 +27,19 @@ function SuggestPage() {
     const a = artist.trim();
     const t = title.trim();
     const l = link.trim();
-    if (!a || !t) { toast.error("Podaj artystę i tytuł"); return; }
-    if (a.length > 200 || t.length > 200 || l.length > 500) { toast.error("Za długie pole"); return; }
+    if (!a || !ttl) { toast.error(t("suggest.toast.empty")); return; }
+    if (a.length > 200 || ttl.length > 200 || l.length > 500) { toast.error(t("suggest.toast.long")); return; }
     setSending(true);
     try {
       const { error } = await (supabase as any)
         .from("track_suggestions")
-        .insert({ artist: a, title: t, link: l || null });
+        .insert({ artist: a, title: ttl, link: l || null });
       if (error) throw error;
       setSent(true);
       setArtist(""); setTitle(""); setLink("");
-      toast.success("Dzięki za propozycję!");
+      toast.success(t("suggest.toast.ok"));
     } catch (err: any) {
-      toast.error(err?.message ?? "Błąd wysyłania");
+      toast.error(err?.message ?? t("suggest.toast.err"));
     } finally { setSending(false); }
   };
 
