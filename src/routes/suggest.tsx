@@ -51,9 +51,9 @@ function SuggestPage() {
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Lightbulb className="h-6 w-6" />
           </div>
-          <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">Zaproponuj</p>
-          <h1 className="font-display text-3xl md:text-4xl">Zaproponuj utwór do bazy</h1>
-          <p className="text-sm text-ink-muted">Brakuje twojego ulubionego kawałka? Wrzuć go — przejrzymy i dodamy do gry.</p>
+          <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">{t("suggest.tag")}</p>
+          <h1 className="font-display text-3xl md:text-4xl">{t("suggest.title")}</h1>
+          <p className="text-sm text-ink-muted">{t("suggest.subtitle")}</p>
         </div>
 
         {sent ? (
@@ -61,21 +61,21 @@ function SuggestPage() {
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-paper">
               <Check className="h-6 w-6" />
             </div>
-            <h2 className="font-display text-2xl">Wysłane!</h2>
-            <p className="text-sm text-ink-muted">Propozycja trafiła do admina. Możesz wysłać kolejną.</p>
+            <h2 className="font-display text-2xl">{t("suggest.sent.title")}</h2>
+            <p className="text-sm text-ink-muted">{t("suggest.sent.desc")}</p>
             <div className="flex justify-center gap-2">
               <button onClick={() => setSent(false)} className="px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90">
-                Dodaj kolejny
+                {t("suggest.sent.again")}
               </button>
               <Link to="/" className="px-5 h-11 inline-flex items-center rounded-full border border-hairline text-sm font-medium hover:bg-muted">
-                Wróć
+                {t("suggest.sent.back")}
               </Link>
             </div>
           </div>
         ) : (
           <form onSubmit={onSubmit} className="rounded-3xl border border-hairline bg-card p-5 sm:p-6 space-y-3">
             <div className="space-y-1">
-              <label className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">Artysta</label>
+              <label className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">{t("suggest.artist")}</label>
               <input
                 value={artist}
                 onChange={(e) => setArtist(e.target.value)}
@@ -85,7 +85,7 @@ function SuggestPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">Tytuł</label>
+              <label className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">{t("suggest.title2")}</label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -95,7 +95,7 @@ function SuggestPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">Link YT / Spotify <span className="opacity-60">(opcjonalnie)</span></label>
+              <label className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">{t("suggest.link")} <span className="opacity-60">{t("suggest.optional")}</span></label>
               <input
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
@@ -109,7 +109,7 @@ function SuggestPage() {
               disabled={sending}
               className="w-full h-12 rounded-2xl bg-ink text-paper font-medium hover:opacity-90 disabled:opacity-40 inline-flex items-center justify-center gap-2"
             >
-              <Send className="h-4 w-4" /> {sending ? "Wysyłam…" : "Wyślij propozycję"}
+              <Send className="h-4 w-4" /> {sending ? t("suggest.sending") : t("suggest.send")}
             </button>
           </form>
         )}
