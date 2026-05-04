@@ -42,16 +42,14 @@ export const Route = createRootRoute({
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "RAP GUESSER — zgaduj polskie rapowe tracki" },
       { name: "twitter:description", content: "Codzienne wyzwanie i nieskończony tryb. Zgaduj utwory polskiego rapu po krótkich samplach." },
-      { property: "og:image", content: "/logo-og.png" },
-      { name: "twitter:image", content: "/logo-og.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c92a0969-b41b-4fb4-af44-104ce739e8e3" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c92a0969-b41b-4fb4-af44-104ce739e8e3" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", type: "image/png", href: "/favicon.png" },
-      { rel: "apple-touch-icon", href: "/favicon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
