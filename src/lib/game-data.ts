@@ -24,17 +24,12 @@ export function allSongs(): Song[] {
   for (const a of ALBUMS) for (const s of a.songs) push(s);
   for (const a of getYtAlbums()) for (const s of a.songs) push(s);
 
-  const byKey = new Map<string, Song>();
-  for (const s of byId.values()) {
-    const k = songKey(s);
-    if (!byKey.has(k)) byKey.set(k, s);
-  }
-  return Array.from(byKey.values());
+  return dedupeSongs(Array.from(byId.values()));
 }
 
 export function albums(): Album[] { return [...getYtAlbums(), ...ALBUMS]; }
 export function albumById(id: string): Album | undefined { return albums().find(a => a.id === id); }
-export function songsForAlbum(id: string): Song[] { return albumById(id)?.songs ?? []; }
+export function songsForAlbum(id: string): Song[] { return dedupeSongs(albumById(id)?.songs ?? []); }
 
 // Daily seed — deterministyczny wybór tracku z daty
 export function dailyKey(d = new Date()): string {
@@ -76,6 +71,18 @@ export function normalize(s: string): string {
     .replace(/[^a-z0-9]+/g, " ").trim();
 }
 
+function titleKey(title: string): string {
+  return normalize(title.replace(/\s*[\[(].*?(?:feat|ft|featuring|prod|remix|edit|version|slowed|sped).*?[\])]/gi, ""));
+}
+
+function artistParts(artist: string): string[] {
+  return artist
+    .replace(/\b(?:feat\.?|ft\.?|featuring|prod\.?|produced by)\b/gi, ",")
+    .split(/,|&|\/|\+|;|\s+x\s+|\s+and\s+|\s+i\s+/i)
+    .map((part) => normalize(part))
+    .filter(Boolean);
+}
+
 export function fuzzyMatch(query: string, song: Song): boolean {
   const q = normalize(query);
   if (!q) return false;
@@ -84,9 +91,21 @@ export function fuzzyMatch(query: string, song: Song): boolean {
 
 /** Klucz "ten sam utwór" — normalizowany artysta + tytuł. */
 export function songKey(s: Song): string {
-  return `${normalize(s.artist)}|${normalize(s.title)}`;
+  return `${artistParts(s.artist)[0] ?? normalize(s.artist)}|${titleKey(s.title)}`;
 }
 
 export function sameSong(a: Song, b: Song): boolean {
-  return a.id === b.id || songKey(a) === songKey(b);
+  if (a.id === b.id) return true;
+  if (titleKey(a.title) !== titleKey(b.title)) return false;
+  const aArtists = artistParts(a.artist);
+  const bArtists = new Set(artistParts(b.artist));
+  return aArtists.some((artist) => bArtists.has(artist));
+}
+
+export function dedupeSongs(list: Song[]): Song[] {
+  const unique: Song[] = [];
+  for (const song of list) {
+    if (!unique.some((existing) => sameSong(existing, song))) unique.push(song);
+  }
+  return unique;
 }
