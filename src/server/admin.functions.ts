@@ -196,3 +196,56 @@ export const updateYtAlbum = createServerFn({ method: "POST" })
     if (tErr) throw new Error(tErr.message);
     return { ok: true };
   });
+
+// ============= OGŁOSZENIA (popup) =============
+
+const AddAnnouncementSchema = PwSchema.extend({
+  title: z.string().min(1).max(200),
+  body: z.string().min(1).max(4000),
+  image_url: z.string().url().max(1000).optional().nullable(),
+  active: z.boolean().optional(),
+});
+
+export const addAnnouncement = createServerFn({ method: "POST" })
+  .inputValidator((d) => AddAnnouncementSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const { data: row, error } = await supabaseAdmin
+      .from("announcements")
+      .insert({
+        title: data.title.trim(),
+        body: data.body.trim(),
+        image_url: data.image_url?.trim() || null,
+        active: data.active ?? true,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const deleteAnnouncement = createServerFn({ method: "POST" })
+  .inputValidator((d) => DelSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const { error } = await supabaseAdmin.from("announcements").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const ToggleAnnouncementSchema = PwSchema.extend({
+  id: z.string().uuid(),
+  active: z.boolean(),
+});
+
+export const toggleAnnouncement = createServerFn({ method: "POST" })
+  .inputValidator((d) => ToggleAnnouncementSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const { error } = await supabaseAdmin
+      .from("announcements")
+      .update({ active: data.active })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
