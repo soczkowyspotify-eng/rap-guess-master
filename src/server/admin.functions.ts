@@ -249,3 +249,17 @@ export const toggleAnnouncement = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ============= PROPOZYCJE UTWORÓW =============
+
+export const deleteSuggestion = createServerFn({ method: "POST" })
+  .inputValidator((d) => DelSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const { error } = await supabaseAdmin
+      .from("track_suggestions" as never)
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
