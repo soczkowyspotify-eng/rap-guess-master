@@ -58,6 +58,7 @@ function DailyPage() {
           won={game.status === "won"}
           guesses={game.guesses}
           maxAttempts={game.maxAttempts}
+          track={game.track}
         />
       )}
     </div>
