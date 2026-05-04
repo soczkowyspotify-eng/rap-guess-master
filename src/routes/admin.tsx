@@ -68,6 +68,8 @@ function AdminPage() {
   const togAnn = useServerFn(toggleAnnouncement);
   const delSug = useServerFn(deleteSuggestion);
   const ytFetch = useServerFn(fetchFromYoutube);
+  const upsertOvr = useServerFn(upsertLegacyOverride);
+  const resetOvr = useServerFn(resetLegacyOverride);
 
   const [tab, setTab] = useState<Tab>("tracks");
 
@@ -81,6 +83,12 @@ function AdminPage() {
   const [albumRows, setAlbumRows] = useState<AlbumRow[]>([]);
   const [annRows, setAnnRows] = useState<AnnouncementRow[]>([]);
   const [sugRows, setSugRows] = useState<SuggestionRow[]>([]);
+
+  // ===== Legacy overrides state =====
+  const [legacyOverrides, setLegacyOverrides] = useState<Record<string, { start_sec: number; hidden: boolean }>>({});
+  const [legacyEdits, setLegacyEdits] = useState<Record<string, { startSec: string; hidden: boolean }>>({});
+  const [legacySearch, setLegacySearch] = useState("");
+  const [legacySavingId, setLegacySavingId] = useState<string | null>(null);
 
   // ===== YT Import state =====
   type ImportRow = YtFetchedTrack & { include: boolean; startSec: string };
