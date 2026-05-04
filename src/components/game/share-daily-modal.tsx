@@ -99,11 +99,13 @@ export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, tr
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 bg-ink/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 bg-ink/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto" onClick={readOnly ? undefined : onClose}>
       <div className="relative max-w-md w-full animate-scale-in" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute -top-3 -right-3 z-10 w-9 h-9 rounded-full bg-card border border-hairline flex items-center justify-center text-ink-muted hover:text-ink shadow-lift transition-colors">
-          <X className="h-4 w-4" />
-        </button>
+        {!readOnly && (
+          <button onClick={onClose} className="absolute -top-3 -right-3 z-10 w-9 h-9 rounded-full bg-card border border-hairline flex items-center justify-center text-ink-muted hover:text-ink shadow-lift transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        )}
 
         {/* Karta do udostępnienia — eksportowana jako PNG */}
         <div
