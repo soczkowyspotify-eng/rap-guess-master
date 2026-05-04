@@ -67,9 +67,9 @@ const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const VersusMatchIdRoute = VersusMatchIdRouteImport.update({
-  id: '/$matchId',
-  path: '/$matchId',
-  getParentRoute: () => VersusRoute,
+  id: '/versus/$matchId',
+  path: '/versus/$matchId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AlbumsAlbumIdRoute = AlbumsAlbumIdRouteImport.update({
   id: '/albums/$albumId',
@@ -168,6 +168,7 @@ export interface RootRouteChildren {
   StatsRoute: typeof StatsRoute
   SuggestRoute: typeof SuggestRoute
   AlbumsAlbumIdRoute: typeof AlbumsAlbumIdRoute
+  VersusMatchIdRoute: typeof VersusMatchIdRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
   VersusIndexRoute: typeof VersusIndexRoute
 }
@@ -239,10 +240,10 @@ declare module '@tanstack/react-router' {
     }
     '/versus/$matchId': {
       id: '/versus/$matchId'
-      path: '/$matchId'
+      path: '/versus/$matchId'
       fullPath: '/versus/$matchId'
       preLoaderRoute: typeof VersusMatchIdRouteImport
-      parentRoute: typeof VersusRoute
+      parentRoute: typeof rootRouteImport
     }
     '/albums/$albumId': {
       id: '/albums/$albumId'
@@ -263,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   StatsRoute: StatsRoute,
   SuggestRoute: SuggestRoute,
   AlbumsAlbumIdRoute: AlbumsAlbumIdRoute,
+  VersusMatchIdRoute: VersusMatchIdRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
   VersusIndexRoute: VersusIndexRoute,
 }
