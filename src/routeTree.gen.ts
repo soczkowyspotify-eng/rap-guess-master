@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VersusRouteImport } from './routes/versus'
 import { Route as SuggestRouteImport } from './routes/suggest'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -17,15 +16,11 @@ import { Route as EndlessRouteImport } from './routes/endless'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VersusIndexRouteImport } from './routes/versus.index'
 import { Route as AlbumsIndexRouteImport } from './routes/albums.index'
 import { Route as VersusMatchIdRouteImport } from './routes/versus.$matchId'
 import { Route as AlbumsAlbumIdRouteImport } from './routes/albums.$albumId'
 
-const VersusRoute = VersusRouteImport.update({
-  id: '/versus',
-  path: '/versus',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SuggestRoute = SuggestRouteImport.update({
   id: '/suggest',
   path: '/suggest',
@@ -61,6 +56,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VersusIndexRoute = VersusIndexRouteImport.update({
+  id: '/versus/',
+  path: '/versus/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
   id: '/albums/',
   path: '/albums/',
@@ -85,10 +85,10 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/suggest': typeof SuggestRoute
-  '/versus': typeof VersusRouteWithChildren
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/versus/$matchId': typeof VersusMatchIdRoute
   '/albums/': typeof AlbumsIndexRoute
+  '/versus/': typeof VersusIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -98,10 +98,10 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/suggest': typeof SuggestRoute
-  '/versus': typeof VersusRouteWithChildren
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/versus/$matchId': typeof VersusMatchIdRoute
   '/albums': typeof AlbumsIndexRoute
+  '/versus': typeof VersusIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -112,10 +112,10 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/suggest': typeof SuggestRoute
-  '/versus': typeof VersusRouteWithChildren
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/versus/$matchId': typeof VersusMatchIdRoute
   '/albums/': typeof AlbumsIndexRoute
+  '/versus/': typeof VersusIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,10 +127,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stats'
     | '/suggest'
-    | '/versus'
     | '/albums/$albumId'
     | '/versus/$matchId'
     | '/albums/'
+    | '/versus/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,10 +140,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stats'
     | '/suggest'
-    | '/versus'
     | '/albums/$albumId'
     | '/versus/$matchId'
     | '/albums'
+    | '/versus'
   id:
     | '__root__'
     | '/'
@@ -153,10 +153,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stats'
     | '/suggest'
-    | '/versus'
     | '/albums/$albumId'
     | '/versus/$matchId'
     | '/albums/'
+    | '/versus/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -167,20 +167,13 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
   SuggestRoute: typeof SuggestRoute
-  VersusRoute: typeof VersusRouteWithChildren
   AlbumsAlbumIdRoute: typeof AlbumsAlbumIdRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
+  VersusIndexRoute: typeof VersusIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/versus': {
-      id: '/versus'
-      path: '/versus'
-      fullPath: '/versus'
-      preLoaderRoute: typeof VersusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/suggest': {
       id: '/suggest'
       path: '/suggest'
@@ -230,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/versus/': {
+      id: '/versus/'
+      path: '/versus'
+      fullPath: '/versus/'
+      preLoaderRoute: typeof VersusIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/albums/': {
       id: '/albums/'
       path: '/albums'
@@ -254,17 +254,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface VersusRouteChildren {
-  VersusMatchIdRoute: typeof VersusMatchIdRoute
-}
-
-const VersusRouteChildren: VersusRouteChildren = {
-  VersusMatchIdRoute: VersusMatchIdRoute,
-}
-
-const VersusRouteWithChildren =
-  VersusRoute._addFileChildren(VersusRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
@@ -273,9 +262,9 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
   SuggestRoute: SuggestRoute,
-  VersusRoute: VersusRouteWithChildren,
   AlbumsAlbumIdRoute: AlbumsAlbumIdRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
+  VersusIndexRoute: VersusIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
