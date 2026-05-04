@@ -93,10 +93,11 @@ export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, tr
   };
 
   useEffect(() => {
+    if (readOnly) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, readOnly]);
 
   return (
     <div className="fixed inset-0 bg-ink/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto" onClick={readOnly ? undefined : onClose}>
