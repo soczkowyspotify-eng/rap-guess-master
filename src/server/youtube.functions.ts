@@ -95,10 +95,10 @@ export const fetchFromYoutube = createServerFn({ method: "POST" })
       const items: any[] = [];
       let pageToken: string | undefined = undefined;
       do {
-        const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${key}${pageToken ? `&pageToken=${pageToken}` : ""}`;
-        const r = await fetch(url);
+        const url: string = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${key}${pageToken ? `&pageToken=${pageToken}` : ""}`;
+        const r: Response = await fetch(url);
         if (!r.ok) throw new Error(`YouTube API: ${r.status} ${await r.text()}`);
-        const j = await r.json();
+        const j: any = await r.json();
         items.push(...(j.items ?? []));
         pageToken = j.nextPageToken;
       } while (pageToken && items.length < 100);
