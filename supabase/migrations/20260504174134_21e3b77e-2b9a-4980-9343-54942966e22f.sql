@@ -1,0 +1,2 @@
+ALTER TABLE public.versus_round_results DROP CONSTRAINT versus_round_results_round_chk;
+ALTER TABLE public.versus_round_results ADD CONSTRAINT versus_round_results_round_chk CHECK (round_idx >= 1 AND round_idx <= 8);
