@@ -634,6 +634,37 @@ function AdminPage() {
             </ul>
           </section>
         </>)}
+
+        {tab === "suggestions" && (<>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl">{sugRows.length} {sugRows.length === 1 ? "propozycja" : "propozycji"} od userów</h2>
+              <button onClick={refresh} className="text-xs text-ink-muted hover:text-ink underline underline-offset-4">Odśwież</button>
+            </div>
+            <ul className="space-y-2">
+              {sugRows.length === 0 && (
+                <li className="rounded-2xl border border-hairline px-4 py-8 text-center text-sm text-ink-muted">Brak propozycji.</li>
+              )}
+              {sugRows.map((s) => (
+                <li key={s.id} className="rounded-2xl border border-hairline p-4 bg-paper flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate">{s.title}</div>
+                    <div className="text-sm text-ink-muted truncate">{s.artist}</div>
+                    <div className="text-[11px] font-mono text-ink-muted mt-1">{new Date(s.created_at).toLocaleString("pl-PL")}</div>
+                  </div>
+                  {s.link && (
+                    <a href={s.link} target="_blank" rel="noreferrer" className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-muted transition" aria-label="Otwórz link">
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                  <button onClick={() => onDeleteSuggestion(s.id)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted transition" aria-label="Usuń">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>)}
       </main>
     </div>
   );
