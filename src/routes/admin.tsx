@@ -150,6 +150,18 @@ function AdminPage() {
       .select("id, artist, title, link, created_at")
       .order("created_at", { ascending: false });
     setSugRows((sug ?? []) as SuggestionRow[]);
+    const { data: ovr } = await (supabase as any)
+      .from("legacy_song_overrides")
+      .select("song_id, start_sec, hidden");
+    const map: Record<string, { start_sec: number; hidden: boolean }> = {};
+    for (const r of (ovr ?? [])) map[r.song_id] = { start_sec: r.start_sec ?? 0, hidden: !!r.hidden };
+    setLegacyOverrides(map);
+    const edits: Record<string, { startSec: string; hidden: boolean }> = {};
+    for (const sId of Object.keys(map)) {
+      const o = map[sId];
+      edits[sId] = { startSec: o.start_sec ? formatSec(o.start_sec) : "", hidden: o.hidden };
+    }
+    setLegacyEdits(edits);
   };
 
   useEffect(() => { if (authed) refresh(); }, [authed]);
