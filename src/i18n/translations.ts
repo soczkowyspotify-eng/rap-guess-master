@@ -15,6 +15,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     "nav.daily": "Daily",
     "nav.endless": "Endless",
     "nav.albums": "Albumy",
+    "nav.versus": "Versus",
     "nav.suggest": "Zaproponuj",
     "nav.stats": "Statystyki",
     "nav.settings": "Ustawienia",
@@ -36,6 +37,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     "home.mode.daily.desc": "Jeden track dziennie. Ten sam dla wszystkich.",
     "home.mode.endless.desc": "Bez końca. Ile trafień pod rząd?",
     "home.mode.albums.desc": "Wybierz album, zgadnij każdy track.",
+    "home.mode.versus.desc": "Wyzwij znajomego. Wygrywa kto trafi z mniejszą liczbą prób.",
     "home.footer.version": "RAP GUESSER · v2",
 
     "daily.tag": "Daily",
@@ -140,6 +142,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     "nav.daily": "Daily",
     "nav.endless": "Endless",
     "nav.albums": "Albums",
+    "nav.versus": "Versus",
     "nav.suggest": "Suggest",
     "nav.stats": "Stats",
     "nav.settings": "Settings",
@@ -161,6 +164,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     "home.mode.daily.desc": "One track a day. The same for everyone.",
     "home.mode.endless.desc": "Endless. How many in a row?",
     "home.mode.albums.desc": "Pick an album, guess every track.",
+    "home.mode.versus.desc": "Challenge a friend. Whoever guesses with fewer tries wins.",
     "home.footer.version": "RAP GUESSER · v2",
 
     "daily.tag": "Daily",
@@ -265,6 +269,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     "nav.daily": "Daily",
     "nav.endless": "Endless",
     "nav.albums": "Alben",
+    "nav.versus": "Versus",
     "nav.suggest": "Vorschlagen",
     "nav.stats": "Statistik",
     "nav.settings": "Einstellungen",
@@ -286,6 +291,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     "home.mode.daily.desc": "Ein Track pro Tag. Für alle gleich.",
     "home.mode.endless.desc": "Endlos. Wie viele in Folge?",
     "home.mode.albums.desc": "Wähle ein Album, errate jeden Track.",
+    "home.mode.versus.desc": "Fordere einen Freund heraus. Wer mit weniger Versuchen rät, gewinnt.",
     "home.footer.version": "RAP GUESSER · v2",
 
     "daily.tag": "Daily",
@@ -390,6 +396,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     "nav.daily": "Daily",
     "nav.endless": "Endless",
     "nav.albums": "Albums",
+    "nav.versus": "Versus",
     "nav.suggest": "Proposer",
     "nav.stats": "Stats",
     "nav.settings": "Réglages",
@@ -411,6 +418,7 @@ export const TRANSLATIONS: Record<Lang, Dict> = {
     "home.mode.daily.desc": "Un morceau par jour. Le même pour tous.",
     "home.mode.endless.desc": "Sans fin. Combien d'affilée ?",
     "home.mode.albums.desc": "Choisis un album, devine chaque morceau.",
+    "home.mode.versus.desc": "Défie un ami. Celui qui devine en moins d'essais gagne.",
     "home.footer.version": "RAP GUESSER · v2",
 
     "daily.tag": "Daily",
