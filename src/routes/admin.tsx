@@ -474,6 +474,10 @@ function AdminPage() {
               onClick={() => setTab("suggestions")}
               className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "suggestions" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
             ><Lightbulb className="h-4 w-4" /> Propozycje{sugRows.length > 0 && <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] rounded-full bg-primary text-paper">{sugRows.length}</span>}</button>
+            <button
+              onClick={() => setTab("ytimport")}
+              className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "ytimport" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
+            ><Youtube className="h-4 w-4" /> YT Import <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/20 text-primary">BETA</span></button>
           </div>
         </div>
 
