@@ -170,13 +170,6 @@ export type Database = {
             referencedRelation: "versus_matches"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "versus_round_results_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "versus_matches_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       yt_album_tracks: {
@@ -276,48 +269,7 @@ export type Database = {
       }
     }
     Views: {
-      versus_matches_public: {
-        Row: {
-          created_at: string | null
-          current_round: number | null
-          guest_nick: string | null
-          guest_player_id: string | null
-          guest_score: number | null
-          host_nick: string | null
-          host_player_id: string | null
-          host_score: number | null
-          id: string | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          current_round?: number | null
-          guest_nick?: string | null
-          guest_player_id?: string | null
-          guest_score?: number | null
-          host_nick?: string | null
-          host_player_id?: string | null
-          host_score?: number | null
-          id?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          current_round?: number | null
-          guest_nick?: string | null
-          guest_player_id?: string | null
-          guest_score?: number | null
-          host_nick?: string | null
-          host_player_id?: string | null
-          host_score?: number | null
-          id?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never
