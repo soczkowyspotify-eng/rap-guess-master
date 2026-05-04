@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          active: boolean
+          body: string
+          created_at: string
+          id: string
+          image_url: string | null
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          title: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       yt_album_tracks: {
         Row: {
           album_id: string

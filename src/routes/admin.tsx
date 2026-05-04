@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
-import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum } from "@/server/admin.functions";
+import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
-import { Trash2, Lock, Plus, Music, Disc3, X, Pencil } from "lucide-react";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
@@ -41,8 +41,11 @@ interface AlbumRow {
   recommended: boolean;
   yt_album_tracks: { id: string; video_id: string; artist: string; title: string; position: number; start_sec: number }[];
 }
+interface AnnouncementRow {
+  id: string; title: string; body: string; image_url: string | null; active: boolean; created_at: string;
+}
 
-type Tab = "tracks" | "albums";
+type Tab = "tracks" | "albums" | "announcements";
 
 function AdminPage() {
   const [pw, setPw] = useState("");
@@ -55,6 +58,9 @@ function AdminPage() {
   const addAlb = useServerFn(addYtAlbum);
   const delAlb = useServerFn(deleteYtAlbum);
   const updAlb = useServerFn(updateYtAlbum);
+  const addAnn = useServerFn(addAnnouncement);
+  const delAnn = useServerFn(deleteAnnouncement);
+  const togAnn = useServerFn(toggleAnnouncement);
 
   const [tab, setTab] = useState<Tab>("tracks");
 
@@ -66,6 +72,14 @@ function AdminPage() {
 
   const [rows, setRows] = useState<Row[]>([]);
   const [albumRows, setAlbumRows] = useState<AlbumRow[]>([]);
+  const [annRows, setAnnRows] = useState<AnnouncementRow[]>([]);
+
+  // Announcement form
+  const [annTitle, setAnnTitle] = useState("");
+  const [annBody, setAnnBody] = useState("");
+  const [annImage, setAnnImage] = useState("");
+  const [annActive, setAnnActive] = useState(true);
+  const [savingAnn, setSavingAnn] = useState(false);
 
   // Album form state
   const [aCover, setACover] = useState("");
@@ -100,6 +114,11 @@ function AdminPage() {
       .select("id, cover_url, artist, title, year, recommended, created_at, yt_album_tracks(id, video_id, artist, title, position, start_sec)")
       .order("created_at", { ascending: false });
     setAlbumRows((a ?? []) as unknown as AlbumRow[]);
+    const { data: ann } = await supabase
+      .from("announcements")
+      .select("id, title, body, image_url, active, created_at")
+      .order("created_at", { ascending: false });
+    setAnnRows((ann ?? []) as AnnouncementRow[]);
   };
 
   useEffect(() => { if (authed) refresh(); }, [authed]);
@@ -248,6 +267,44 @@ function AdminPage() {
   const addTrackRow = () => setATracks((p) => [...p, { link: "", artist: "", title: "", start_sec: "" }]);
   const removeTrackRow = (idx: number) => setATracks((p) => p.length > 1 ? p.filter((_, i) => i !== idx) : p);
 
+  const onAddAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!annTitle.trim() || !annBody.trim()) {
+      toast.error("Uzupełnij tytuł i treść"); return;
+    }
+    setSavingAnn(true);
+    try {
+      await addAnn({ data: {
+        password: pw,
+        title: annTitle.trim(),
+        body: annBody.trim(),
+        image_url: annImage.trim() || null,
+        active: annActive,
+      } });
+      toast.success("Ogłoszenie zapisane");
+      setAnnTitle(""); setAnnBody(""); setAnnImage(""); setAnnActive(true);
+      await refresh();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd");
+    } finally { setSavingAnn(false); }
+  };
+
+  const onDeleteAnnouncement = async (id: string) => {
+    if (!confirm("Usunąć to ogłoszenie?")) return;
+    try {
+      await delAnn({ data: { password: pw, id } });
+      await refresh();
+      toast.success("Usunięto");
+    } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
+  };
+
+  const onToggleAnnouncement = async (id: string, active: boolean) => {
+    try {
+      await togAnn({ data: { password: pw, id, active } });
+      await refresh();
+    } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
+  };
+
   if (!authed) {
     return (
       <div className="min-h-screen bg-paper">
@@ -300,6 +357,10 @@ function AdminPage() {
               onClick={() => setTab("albums")}
               className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "albums" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
             ><Disc3 className="h-4 w-4" /> Albumy</button>
+            <button
+              onClick={() => setTab("announcements")}
+              className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "announcements" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
+            ><Megaphone className="h-4 w-4" /> Popup</button>
           </div>
         </div>
 
@@ -473,6 +534,76 @@ function AdminPage() {
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button onClick={() => onDeleteAlbum(a.id)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted transition" aria-label="Usuń">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>)}
+
+        {tab === "announcements" && (<>
+          <form onSubmit={onAddAnnouncement} className="rounded-3xl border border-hairline p-5 sm:p-6 space-y-3 bg-card">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted flex items-center gap-2">
+              <Megaphone className="h-3.5 w-3.5" /> Nowy popup dla użytkowników
+            </p>
+            <input
+              value={annTitle}
+              onChange={(e) => setAnnTitle(e.target.value)}
+              placeholder="Tytuł"
+              className="w-full h-11 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm"
+            />
+            <textarea
+              value={annBody}
+              onChange={(e) => setAnnBody(e.target.value)}
+              placeholder="Tekst ogłoszenia (możesz wstawiać nowe linie)"
+              rows={5}
+              className="w-full px-3 py-2 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm resize-y"
+            />
+            <input
+              value={annImage}
+              onChange={(e) => setAnnImage(e.target.value)}
+              placeholder="URL grafiki (opcjonalnie)"
+              className="w-full h-11 px-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm"
+            />
+            {annImage && (
+              <img src={annImage} alt="" className="max-h-40 rounded-xl border border-hairline object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
+            )}
+            <div className="flex items-center justify-between">
+              <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input type="checkbox" checked={annActive} onChange={(e) => setAnnActive(e.target.checked)} className="h-4 w-4 accent-primary" />
+                <span>Aktywne (pokazuj userom)</span>
+              </label>
+              <button type="submit" disabled={savingAnn} className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90 disabled:opacity-40">
+                <Plus className="h-4 w-4" /> {savingAnn ? "Zapisuję…" : "Opublikuj"}
+              </button>
+            </div>
+            <p className="text-xs text-ink-muted">Najnowsze aktywne ogłoszenie pokaże się każdemu userowi raz (po jego zamknięciu nie wróci).</p>
+          </form>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl">{annRows.length} {annRows.length === 1 ? "ogłoszenie" : "ogłoszeń"}</h2>
+              <button onClick={refresh} className="text-xs text-ink-muted hover:text-ink underline underline-offset-4">Odśwież</button>
+            </div>
+            <ul className="space-y-3">
+              {annRows.length === 0 && (
+                <li className="rounded-2xl border border-hairline px-4 py-8 text-center text-sm text-ink-muted">Brak ogłoszeń.</li>
+              )}
+              {annRows.map((a) => (
+                <li key={a.id} className={`rounded-2xl border p-4 bg-paper flex gap-3 items-start ${a.active ? "border-primary/40" : "border-hairline opacity-70"}`}>
+                  {a.image_url && <img src={a.image_url} alt="" className="h-16 w-16 rounded-lg object-cover bg-card shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate flex items-center gap-2">
+                      {a.title}
+                      {a.active && <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary text-paper">Live</span>}
+                    </div>
+                    <div className="text-sm text-ink-muted line-clamp-2 whitespace-pre-line">{a.body}</div>
+                  </div>
+                  <button onClick={() => onToggleAnnouncement(a.id, !a.active)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-muted transition" aria-label="Przełącz">
+                    {a.active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                  <button onClick={() => onDeleteAnnouncement(a.id)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted transition" aria-label="Usuń">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </li>
