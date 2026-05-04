@@ -31,7 +31,7 @@ export function ScoreBar({ hostNick, guestNick, hostScore, guestScore, youAreHos
       </div>
       <Side nick={guestNick ?? "—"} score={guestScore} isYou={!youAreHost} align="right" />
       {timer && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+        <div className="absolute -top-4 -right-4 bg-card border border-hairline rounded-full p-1 shadow-lift">
           {timer}
         </div>
       )}
