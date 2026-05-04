@@ -163,6 +163,22 @@ export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, tr
           </div>
         </div>
 
+        {readOnly ? (
+          <div className="mt-4 flex flex-col gap-2 bg-card border border-hairline rounded-2xl p-3 shadow-lift">
+            <a
+              href="/daily"
+              className="h-11 rounded-full bg-ink text-paper text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 active:scale-[.98] transition"
+            >
+              Zagraj dzisiejsze Daily
+            </a>
+            <a
+              href="/"
+              className="h-10 rounded-full border border-hairline text-xs font-medium flex items-center justify-center gap-2 hover:bg-muted transition"
+            >
+              Strona główna
+            </a>
+          </div>
+        ) : (
         <div className="mt-4 flex flex-col gap-2 bg-card border border-hairline rounded-2xl p-3 shadow-lift">
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -194,6 +210,7 @@ export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, tr
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
