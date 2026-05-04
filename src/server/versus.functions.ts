@@ -34,7 +34,7 @@ function pickRandomTrackIds(n: number): string[] {
 export const createMatch = createServerFn({ method: "POST" })
   .inputValidator((d) => PlayerSchema.parse(d))
   .handler(async ({ data }) => {
-    const trackIds = pickRandomTrackIds(6);
+    const trackIds = pickRandomTrackIds(8);
     const { data: row, error } = await supabaseAdmin
       .from("versus_matches")
       .insert({
@@ -151,7 +151,7 @@ export const getRoundTrack = createServerFn({ method: "POST" })
       .object({
         matchId: z.string().uuid(),
         playerId: z.string().min(8).max(64),
-        roundIdx: z.number().int().min(1).max(6),
+        roundIdx: z.number().int().min(1).max(8),
       })
       .parse(d),
   )
@@ -179,7 +179,7 @@ export const submitRoundResult = createServerFn({ method: "POST" })
       .object({
         matchId: z.string().uuid(),
         playerId: z.string().min(8).max(64),
-        roundIdx: z.number().int().min(1).max(6),
+        roundIdx: z.number().int().min(1).max(8),
         attemptsUsed: z.number().int().min(0).max(6),
         correct: z.boolean(),
       })
@@ -237,12 +237,20 @@ export const submitRoundResult = createServerFn({ method: "POST" })
 
     const newHost = Number(m.host_score) + hostPts;
     const newGuest = Number(m.guest_score) + guestPts;
-    const totalRounds = (m.track_ids ?? []).length;
+    const completedRound = m.current_round;
+    const REGULAR = 5;
+    const MAX = 8;
 
     let nextStatus: "playing" | "finished" = "playing";
-    let nextRound = m.current_round + 1;
-    if (newHost >= 3 || newGuest >= 3 || nextRound > totalRounds) {
-      nextStatus = "finished";
+    let nextRound = completedRound + 1;
+
+    if (completedRound < REGULAR) {
+      // Normalna faza: pierwszy do 3 wygrywa wcześniej.
+      if (newHost >= 3 || newGuest >= 3) nextStatus = "finished";
+    } else {
+      // Po 5. rundzie: koniec jeśli ktoś prowadzi, inaczej dogrywka do max 8.
+      if (newHost !== newGuest) nextStatus = "finished";
+      else if (completedRound >= MAX) nextStatus = "finished";
     }
 
     const { error: uErr } = await supabaseAdmin
@@ -273,7 +281,7 @@ export const rematch = createServerFn({ method: "POST" })
     if (m.host_player_id !== data.playerId && m.guest_player_id !== data.playerId) {
       throw new Error("Nie jesteś w tym meczu");
     }
-    const trackIds = pickRandomTrackIds(6);
+    const trackIds = pickRandomTrackIds(8);
     const { data: row, error: insErr } = await supabaseAdmin
       .from("versus_matches")
       .insert({

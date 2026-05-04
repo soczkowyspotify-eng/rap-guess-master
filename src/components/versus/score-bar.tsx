@@ -15,7 +15,12 @@ export function ScoreBar({ hostNick, guestNick, hostScore, guestScore, youAreHos
       <Side nick={hostNick} score={hostScore} isYou={youAreHost} align="left" />
       <div className="text-center">
         <div className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">Runda</div>
-        <div className="font-display text-2xl">{currentRound} / 5</div>
+        <div className="font-display text-2xl">
+          {currentRound > 5 ? `${currentRound} / 8` : `${currentRound} / 5`}
+        </div>
+        {currentRound > 5 && (
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary mt-0.5">Dogrywka</div>
+        )}
       </div>
       <Side nick={guestNick ?? "—"} score={guestScore} isYou={!youAreHost} align="right" />
     </div>

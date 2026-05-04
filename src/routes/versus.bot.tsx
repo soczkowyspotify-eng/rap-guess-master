@@ -87,7 +87,7 @@ function VersusBotPage() {
             key={matchKey}
             difficulty={difficulty}
             myNick={nick.trim() || "Ty"}
-            totalRounds={5}
+            totalRounds={8}
             onMatchEnd={handleEnd}
           />
         )}
