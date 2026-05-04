@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      track_suggestions: {
+        Row: {
+          artist: string
+          created_at: string
+          id: string
+          link: string | null
+          title: string
+        }
+        Insert: {
+          artist: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          title: string
+        }
+        Update: {
+          artist?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       yt_album_tracks: {
         Row: {
           album_id: string
