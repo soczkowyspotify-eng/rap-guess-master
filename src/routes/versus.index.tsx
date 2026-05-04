@@ -10,7 +10,7 @@ import { NickInput } from "@/components/versus/nick-input";
 import { createMatch } from "@/server/versus.functions";
 import { VersusLocal } from "@/lib/storage";
 
-export const Route = createFileRoute("/versus")({
+export const Route = createFileRoute("/versus/")({
   head: () => ({
     meta: [
       { title: "Versus 1v1 — RAP GUESSER" },
