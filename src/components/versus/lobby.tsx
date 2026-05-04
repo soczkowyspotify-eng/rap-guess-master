@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, Check, Pencil, Play } from "lucide-react";
+import { Copy, Check, Pencil, Play, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { NickInput } from "./nick-input";
@@ -29,6 +30,14 @@ export function VersusLobby({ match, playerId }: Props) {
   const lobbyFull = !!match.guest_player_id;
 
   const link = typeof window !== "undefined" ? `${window.location.origin}/versus/${match.id}` : "";
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (!link) return;
+    QRCode.toDataURL(link, { width: 256, margin: 1, color: { dark: "#000000", light: "#ffffff" } })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(""));
+  }, [link]);
 
   const copy = async () => {
     try {
@@ -92,6 +101,23 @@ export function VersusLobby({ match, playerId }: Props) {
           </Button>
         </div>
       </div>
+
+      {!lobbyFull && (
+        <div className="bg-card border border-hairline rounded-2xl p-5 space-y-4 text-center">
+          <div className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">Zeskanuj kod QR</div>
+          {qrDataUrl ? (
+            <img src={qrDataUrl} alt="Kod QR z linkiem do meczu" className="mx-auto w-48 h-48 rounded-xl bg-white p-2" />
+          ) : (
+            <div className="mx-auto w-48 h-48 grid place-items-center bg-muted rounded-xl">
+              <Loader2 className="h-6 w-6 animate-spin text-ink-muted" />
+            </div>
+          )}
+          <div className="flex items-center justify-center gap-2 text-sm text-ink-muted">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Czekamy na drugiego gracza…
+          </div>
+        </div>
+      )}
 
       {isHost ? (
         <Button
