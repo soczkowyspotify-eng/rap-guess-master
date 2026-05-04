@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Play, Pause } from "lucide-react";
 import { toast } from "sonner";
@@ -157,7 +157,7 @@ function PlayArea({
   onGuess: (s: Song) => void;
   onSkip: () => void;
   onPlayed?: () => void;
-  timer?: React.ReactNode;
+  timer?: ReactNode;
 }) {
   const duration = conf.durations[Math.min(attemptIdx, conf.durations.length - 1)];
   const player = useAudioPlayer({ song: track, durationSec: duration, startSec: track.startSec ?? 0 });
