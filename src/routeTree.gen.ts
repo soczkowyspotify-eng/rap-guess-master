@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuggestRouteImport } from './routes/suggest'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as EndlessRouteImport } from './routes/endless'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AlbumsIndexRouteImport } from './routes/albums.index'
 import { Route as AlbumsAlbumIdRouteImport } from './routes/albums.$albumId'
 
+const SuggestRoute = SuggestRouteImport.update({
+  id: '/suggest',
+  path: '/suggest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums/': typeof AlbumsIndexRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums': typeof AlbumsIndexRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/albums/': typeof AlbumsIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/endless'
     | '/settings'
     | '/stats'
+    | '/suggest'
     | '/albums/$albumId'
     | '/albums/'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/endless'
     | '/settings'
     | '/stats'
+    | '/suggest'
     | '/albums/$albumId'
     | '/albums'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/endless'
     | '/settings'
     | '/stats'
+    | '/suggest'
     | '/albums/$albumId'
     | '/albums/'
   fileRoutesById: FileRoutesById
@@ -130,12 +142,20 @@ export interface RootRouteChildren {
   EndlessRoute: typeof EndlessRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
+  SuggestRoute: typeof SuggestRoute
   AlbumsAlbumIdRoute: typeof AlbumsAlbumIdRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/suggest': {
+      id: '/suggest'
+      path: '/suggest'
+      fullPath: '/suggest'
+      preLoaderRoute: typeof SuggestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stats': {
       id: '/stats'
       path: '/stats'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   EndlessRoute: EndlessRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
+  SuggestRoute: SuggestRoute,
   AlbumsAlbumIdRoute: AlbumsAlbumIdRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
 }
