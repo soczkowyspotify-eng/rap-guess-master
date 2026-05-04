@@ -357,6 +357,10 @@ function AdminPage() {
               onClick={() => setTab("albums")}
               className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "albums" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
             ><Disc3 className="h-4 w-4" /> Albumy</button>
+            <button
+              onClick={() => setTab("announcements")}
+              className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "announcements" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
+            ><Megaphone className="h-4 w-4" /> Popup</button>
           </div>
         </div>
 
