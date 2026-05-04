@@ -96,6 +96,7 @@ function AdminPage() {
   const [legacyEdits, setLegacyEdits] = useState<Record<string, { startSec: string; hidden: boolean }>>({});
   const [legacySearch, setLegacySearch] = useState("");
   const [legacySavingId, setLegacySavingId] = useState<string | null>(null);
+  const [legacyPreview, setLegacyPreview] = useState<string | null>(null);
 
   // ===== YT Import state =====
   type ImportRow = YtFetchedTrack & { include: boolean; startSec: string };
@@ -1013,6 +1014,14 @@ function AdminPage() {
                             <span>Ukryj z gry</span>
                           </label>
                           <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setLegacyPreview(legacyPreview === s.id ? null : s.id)}
+                              className={`h-9 w-9 rounded-full inline-flex items-center justify-center transition ${legacyPreview === s.id ? "bg-primary text-paper" : "border border-hairline text-ink-muted hover:text-ink hover:bg-muted"}`}
+                              title="Odsłuchaj"
+                              aria-label="Odsłuchaj"
+                            >
+                              <Play className="h-4 w-4" />
+                            </button>
                             {isOverridden && (
                               <button
                                 onClick={() => onResetLegacy(s.id)}
@@ -1030,6 +1039,35 @@ function AdminPage() {
                             </button>
                           </div>
                         </div>
+                        {legacyPreview === s.id && (
+                          <div className="mt-3">
+                            {s.type === "youtube" ? (
+                              <div className="rounded-xl overflow-hidden bg-black aspect-video">
+                                <iframe
+                                  src={`https://www.youtube.com/embed/${s.src}?autoplay=1&start=${parseStart(edit.startSec)}`}
+                                  title={s.title}
+                                  allow="autoplay; encrypted-media"
+                                  allowFullScreen
+                                  className="w-full h-full border-0"
+                                />
+                              </div>
+                            ) : (
+                              <audio
+                                src={s.src}
+                                controls
+                                autoPlay
+                                onLoadedMetadata={(e) => {
+                                  const off = parseStart(edit.startSec);
+                                  if (off > 0) (e.currentTarget as HTMLAudioElement).currentTime = off;
+                                }}
+                                className="w-full h-10"
+                              />
+                            )}
+                            <p className="mt-1.5 text-[11px] font-mono text-ink-muted">
+                              Start: {parseStart(edit.startSec)}s {parseStart(edit.startSec) > 0 && "(z aktualnego pola offset)"}
+                            </p>
+                          </div>
+                        )}
                       </li>
                     );
                   })}
