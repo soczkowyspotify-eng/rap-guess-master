@@ -13,6 +13,9 @@ export interface VersusMatch {
   guest_score: number;
   created_at: string;
   updated_at: string;
+  mode: "classic" | "blitz";
+  rematch_requested_by: string | null;
+  rematch_match_id: string | null;
 }
 
 export interface VersusRoundResult {
@@ -39,7 +42,7 @@ export function useVersusMatch(matchId: string | undefined) {
       const [{ data: m, error: mErr }, { data: r, error: rErr }] = await Promise.all([
         supabase
           .from("versus_matches")
-          .select("id, host_player_id, host_nick, guest_player_id, guest_nick, status, current_round, host_score, guest_score, created_at, updated_at")
+          .select("id, host_player_id, host_nick, guest_player_id, guest_nick, status, current_round, host_score, guest_score, created_at, updated_at, mode, rematch_requested_by, rematch_match_id")
           .eq("id", matchId)
           .maybeSingle(),
         supabase
