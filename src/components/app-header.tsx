@@ -1,10 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Disc3, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { useI18n } from "@/i18n/i18n";
+import logoUrl from "@/assets/logo.png";
 
 const NAV = [
   { to: "/", key: "nav.start" },
@@ -27,8 +28,14 @@ export function AppHeader() {
     <header className="border-b border-hairline bg-paper/80 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
         <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group min-w-0">
-          <Disc3 className="h-5 w-5 text-primary group-hover:rotate-180 transition-transform duration-700" />
-          <span className="font-display text-lg sm:text-xl tracking-tight truncate">RAP GUESSER</span>
+          <img
+            src={logoUrl}
+            alt="RAP GUESSER"
+            className="h-8 w-8 sm:h-9 sm:w-9 object-contain group-hover:rotate-12 transition-transform duration-500"
+          />
+          <span className="font-display text-lg sm:text-xl tracking-tight truncate">
+            <span className="text-primary">RAP</span>GUESSER
+          </span>
         </Link>
         <nav className="hidden md:flex items-center gap-1">
           {NAV.slice(0, -1).map(item => {
