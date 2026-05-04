@@ -281,7 +281,7 @@ export const rematch = createServerFn({ method: "POST" })
     if (m.host_player_id !== data.playerId && m.guest_player_id !== data.playerId) {
       throw new Error("Nie jesteś w tym meczu");
     }
-    const trackIds = pickRandomTrackIds(6);
+    const trackIds = pickRandomTrackIds(8);
     const { data: row, error: insErr } = await supabaseAdmin
       .from("versus_matches")
       .insert({
