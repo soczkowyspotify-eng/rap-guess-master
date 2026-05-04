@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Calendar, Infinity as Inf, Disc3, ArrowRight } from "lucide-react";
+import { Calendar, Infinity as Inf, Disc3, ArrowRight, Swords } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 import { Vinyl } from "@/components/game/vinyl";
 import { allSongs, albums } from "@/lib/game-data";
@@ -20,6 +20,7 @@ const MODES = [
   { to: "/daily", labelKey: "nav.daily", descKey: "home.mode.daily.desc", icon: Calendar },
   { to: "/endless", labelKey: "nav.endless", descKey: "home.mode.endless.desc", icon: Inf },
   { to: "/albums", labelKey: "nav.albums", descKey: "home.mode.albums.desc", icon: Disc3 },
+  { to: "/versus", labelKey: "nav.versus", descKey: "home.mode.versus.desc", icon: Swords },
 ] as const;
 
 function Index() {
