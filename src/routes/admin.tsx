@@ -336,6 +336,84 @@ function AdminPage() {
     } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
   };
 
+  // ===== YT Import handlers =====
+  const onYtFetch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ytLink.trim()) { toast.error("Wklej link YouTube"); return; }
+    setYtFetching(true);
+    setYtPreview(null);
+    try {
+      const res = await ytFetch({ data: { password: pw, link: ytLink.trim() } });
+      setYtKind(res.type);
+      setYtRows(res.tracks.map((t) => ({ ...t, include: true, startSec: "" })));
+      if (res.type === "playlist" && res.albumMeta) {
+        setYtAlbum({
+          title: res.albumMeta.title,
+          artist: res.albumMeta.artist,
+          cover_url: res.albumMeta.cover_url,
+          year: res.albumMeta.year ? String(res.albumMeta.year) : "",
+          recommended: false,
+        });
+      } else {
+        setYtAlbum({ title: "", artist: "", cover_url: "", year: "", recommended: false });
+      }
+      toast.success(res.type === "playlist" ? `Pobrano album (${res.tracks.length} tracków)` : "Pobrano utwór");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd pobierania z YouTube");
+    } finally { setYtFetching(false); }
+  };
+
+  const updateYtRow = (i: number, key: keyof ImportRow, val: any) => {
+    setYtRows((p) => p.map((r, idx) => idx === i ? { ...r, [key]: val } : r));
+  };
+
+  const onYtClear = () => {
+    setYtKind(null); setYtRows([]); setYtPreview(null); setYtLink("");
+    setYtAlbum({ title: "", artist: "", cover_url: "", year: "", recommended: false });
+  };
+
+  const onYtSaveTracks = async () => {
+    const sel = ytRows.filter((r) => r.include && r.artist.trim() && r.parsedTitle.trim());
+    if (!sel.length) { toast.error("Zaznacz przynajmniej jeden track z wypełnionymi polami"); return; }
+    setYtSaving(true);
+    let ok = 0, fail = 0;
+    for (const r of sel) {
+      try {
+        await add({ data: { password: pw, link: r.video_id, artist: r.artist.trim(), title: r.parsedTitle.trim() } });
+        ok++;
+      } catch { fail++; }
+    }
+    setYtSaving(false);
+    toast[fail ? "warning" : "success"](`Zapisano ${ok}${fail ? `, błędów: ${fail}` : ""}`);
+    await refresh(); await loadYtTracks();
+    if (!fail) onYtClear();
+  };
+
+  const onYtSaveAlbum = async () => {
+    const sel = ytRows.filter((r) => r.include && r.artist.trim() && r.parsedTitle.trim());
+    if (!sel.length) { toast.error("Zaznacz przynajmniej jeden track"); return; }
+    if (!ytAlbum.cover_url.trim() || !ytAlbum.artist.trim() || !ytAlbum.title.trim()) {
+      toast.error("Uzupełnij okładkę, artystę i tytuł albumu"); return;
+    }
+    setYtSaving(true);
+    try {
+      await addAlb({ data: {
+        password: pw,
+        cover_url: ytAlbum.cover_url.trim(),
+        artist: ytAlbum.artist.trim(),
+        title: ytAlbum.title.trim(),
+        year: ytAlbum.year ? Number(ytAlbum.year) : null,
+        recommended: ytAlbum.recommended,
+        tracks: sel.map((r) => ({ link: r.video_id, artist: r.artist.trim(), title: r.parsedTitle.trim(), start_sec: parseStart(r.startSec) })),
+      } });
+      toast.success("Album dodany");
+      await refresh(); await loadYtAlbums();
+      onYtClear();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd zapisu albumu");
+    } finally { setYtSaving(false); }
+  };
+
   if (!authed) {
     return (
       <div className="min-h-screen bg-paper">
