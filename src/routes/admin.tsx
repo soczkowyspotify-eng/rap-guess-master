@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
-import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum } from "@/server/admin.functions";
+import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
-import { Trash2, Lock, Plus, Music, Disc3, X, Pencil } from "lucide-react";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
@@ -41,8 +41,11 @@ interface AlbumRow {
   recommended: boolean;
   yt_album_tracks: { id: string; video_id: string; artist: string; title: string; position: number; start_sec: number }[];
 }
+interface AnnouncementRow {
+  id: string; title: string; body: string; image_url: string | null; active: boolean; created_at: string;
+}
 
-type Tab = "tracks" | "albums";
+type Tab = "tracks" | "albums" | "announcements";
 
 function AdminPage() {
   const [pw, setPw] = useState("");
@@ -55,6 +58,9 @@ function AdminPage() {
   const addAlb = useServerFn(addYtAlbum);
   const delAlb = useServerFn(deleteYtAlbum);
   const updAlb = useServerFn(updateYtAlbum);
+  const addAnn = useServerFn(addAnnouncement);
+  const delAnn = useServerFn(deleteAnnouncement);
+  const togAnn = useServerFn(toggleAnnouncement);
 
   const [tab, setTab] = useState<Tab>("tracks");
 
@@ -66,6 +72,14 @@ function AdminPage() {
 
   const [rows, setRows] = useState<Row[]>([]);
   const [albumRows, setAlbumRows] = useState<AlbumRow[]>([]);
+  const [annRows, setAnnRows] = useState<AnnouncementRow[]>([]);
+
+  // Announcement form
+  const [annTitle, setAnnTitle] = useState("");
+  const [annBody, setAnnBody] = useState("");
+  const [annImage, setAnnImage] = useState("");
+  const [annActive, setAnnActive] = useState(true);
+  const [savingAnn, setSavingAnn] = useState(false);
 
   // Album form state
   const [aCover, setACover] = useState("");
@@ -100,6 +114,11 @@ function AdminPage() {
       .select("id, cover_url, artist, title, year, recommended, created_at, yt_album_tracks(id, video_id, artist, title, position, start_sec)")
       .order("created_at", { ascending: false });
     setAlbumRows((a ?? []) as unknown as AlbumRow[]);
+    const { data: ann } = await supabase
+      .from("announcements")
+      .select("id, title, body, image_url, active, created_at")
+      .order("created_at", { ascending: false });
+    setAnnRows((ann ?? []) as AnnouncementRow[]);
   };
 
   useEffect(() => { if (authed) refresh(); }, [authed]);
@@ -247,6 +266,44 @@ function AdminPage() {
   };
   const addTrackRow = () => setATracks((p) => [...p, { link: "", artist: "", title: "", start_sec: "" }]);
   const removeTrackRow = (idx: number) => setATracks((p) => p.length > 1 ? p.filter((_, i) => i !== idx) : p);
+
+  const onAddAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!annTitle.trim() || !annBody.trim()) {
+      toast.error("Uzupełnij tytuł i treść"); return;
+    }
+    setSavingAnn(true);
+    try {
+      await addAnn({ data: {
+        password: pw,
+        title: annTitle.trim(),
+        body: annBody.trim(),
+        image_url: annImage.trim() || null,
+        active: annActive,
+      } });
+      toast.success("Ogłoszenie zapisane");
+      setAnnTitle(""); setAnnBody(""); setAnnImage(""); setAnnActive(true);
+      await refresh();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd");
+    } finally { setSavingAnn(false); }
+  };
+
+  const onDeleteAnnouncement = async (id: string) => {
+    if (!confirm("Usunąć to ogłoszenie?")) return;
+    try {
+      await delAnn({ data: { password: pw, id } });
+      await refresh();
+      toast.success("Usunięto");
+    } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
+  };
+
+  const onToggleAnnouncement = async (id: string, active: boolean) => {
+    try {
+      await togAnn({ data: { password: pw, id, active } });
+      await refresh();
+    } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
+  };
 
   if (!authed) {
     return (
