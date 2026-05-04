@@ -11,9 +11,13 @@ import { GuessSearch } from "@/components/game/guess-search";
 import { GuessList } from "@/components/game/guess-list";
 import { useAudioPlayer } from "@/components/game/audio-player";
 import { ScoreBar } from "./score-bar";
+import { RoundTimer } from "./round-timer";
 import { getRoundTrack, submitRoundResult } from "@/server/versus.functions";
 import type { VersusMatch, VersusRoundResult } from "@/hooks/use-versus";
 import { cn } from "@/lib/utils";
+
+const BLITZ_CONF = { attempts: 5, durations: [1, 2, 4, 7, 10] as number[] };
+const BLITZ_TIMER_SEC = 10;
 
 interface Props {
   match: VersusMatch;
@@ -27,13 +31,15 @@ export function VersusRound({ match, results, playerId }: Props) {
   const isHost = match.host_player_id === playerId;
   const oppId = isHost ? match.guest_player_id : match.host_player_id;
 
-  const conf = DIFFICULTY.normal;
+  const isBlitz = match.mode === "blitz";
+  const conf = isBlitz ? BLITZ_CONF : DIFFICULTY.normal;
   const [trackId, setTrackId] = useState<string | null>(null);
   const [trackErr, setTrackErr] = useState<string | null>(null);
   const [attemptIdx, setAttemptIdx] = useState(0);
   const [guesses, setGuesses] = useState<LocalGuess[]>([]);
   const [finished, setFinished] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
 
   const getRoundTrackFn = useServerFn(getRoundTrack);
   const submitFn = useServerFn(submitRoundResult);
@@ -49,6 +55,7 @@ export function VersusRound({ match, results, playerId }: Props) {
     setFinished(false);
     setSubmitted(false);
     setTrackErr(null);
+    setTimerStartedAt(null);
     let cancelled = false;
     getRoundTrackFn({ data: { matchId: match.id, playerId, roundIdx: match.current_round } })
       .then((res) => { if (!cancelled) setTrackId(res.trackId); })
@@ -92,6 +99,14 @@ export function VersusRound({ match, results, playerId }: Props) {
         guestScore={match.guest_score}
         youAreHost={isHost}
         currentRound={match.current_round}
+        variant={isBlitz ? "blitz" : "classic"}
+        timer={isBlitz && !finished ? (
+          <RoundTimer
+            startedAt={timerStartedAt}
+            totalSec={BLITZ_TIMER_SEC}
+            onExpire={() => setFinished(true)}
+          />
+        ) : undefined}
       />
 
       <div className="text-center text-xs font-mono text-ink-muted">
@@ -107,6 +122,7 @@ export function VersusRound({ match, results, playerId }: Props) {
           conf={conf}
           attemptIdx={attemptIdx}
           guesses={guesses}
+          onPlayed={() => setTimerStartedAt((t) => t ?? Date.now())}
           onGuess={(song) => {
             if (sameSong(song, track)) {
               setGuesses((g) => [...g, { trackId: track.id, correct: true }]);
@@ -131,7 +147,7 @@ export function VersusRound({ match, results, playerId }: Props) {
 }
 
 function PlayArea({
-  track, pool, conf, attemptIdx, guesses, onGuess, onSkip,
+  track, pool, conf, attemptIdx, guesses, onGuess, onSkip, onPlayed,
 }: {
   track: Song;
   pool: Song[];
@@ -140,6 +156,7 @@ function PlayArea({
   guesses: LocalGuess[];
   onGuess: (s: Song) => void;
   onSkip: () => void;
+  onPlayed?: () => void;
 }) {
   const duration = conf.durations[Math.min(attemptIdx, conf.durations.length - 1)];
   const player = useAudioPlayer({ song: track, durationSec: duration, startSec: track.startSec ?? 0 });
@@ -153,7 +170,10 @@ function PlayArea({
         <Waveform progress={player.progress} playing={playing} />
         <div className="flex justify-center pt-2">
           <button
-            onClick={() => (playing ? player.stop() : player.play())}
+            onClick={() => {
+              if (playing) player.stop();
+              else { player.play(); onPlayed?.(); }
+            }}
             className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center bg-ink text-paper hover:scale-105 active:scale-95 shadow-lift",
             )}
