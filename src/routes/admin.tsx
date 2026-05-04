@@ -547,6 +547,10 @@ function AdminPage() {
               onClick={() => setTab("ytimport")}
               className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "ytimport" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
             ><Youtube className="h-4 w-4" /> YT Import <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/20 text-primary">BETA</span></button>
+            <button
+              onClick={() => setTab("legacy")}
+              className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "legacy" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
+            ><Archive className="h-4 w-4" /> Legacy</button>
           </div>
         </div>
 
