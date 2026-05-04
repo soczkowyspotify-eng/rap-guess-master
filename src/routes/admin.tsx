@@ -364,6 +364,47 @@ function AdminPage() {
     } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
   };
 
+  // ===== Legacy overrides handlers =====
+  const setLegacyEdit = (songId: string, patch: Partial<{ startSec: string; hidden: boolean }>) => {
+    setLegacyEdits((p) => ({
+      ...p,
+      [songId]: { startSec: p[songId]?.startSec ?? "", hidden: p[songId]?.hidden ?? false, ...patch },
+    }));
+  };
+
+  const onSaveLegacy = async (songId: string) => {
+    const e = legacyEdits[songId] ?? { startSec: "", hidden: false };
+    const start_sec = parseStart(e.startSec);
+    setLegacySavingId(songId);
+    try {
+      if (start_sec === 0 && !e.hidden) {
+        // Nic nie nadpisujemy → reset
+        if (legacyOverrides[songId]) {
+          await resetOvr({ data: { password: pw, song_id: songId } });
+        }
+      } else {
+        await upsertOvr({ data: { password: pw, song_id: songId, start_sec, hidden: e.hidden } });
+      }
+      await refresh();
+      await loadLegacyOverrides();
+      toast.success("Zapisano");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd");
+    } finally { setLegacySavingId(null); }
+  };
+
+  const onResetLegacy = async (songId: string) => {
+    setLegacySavingId(songId);
+    try {
+      await resetOvr({ data: { password: pw, song_id: songId } });
+      await refresh();
+      await loadLegacyOverrides();
+      toast.success("Zresetowano");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd");
+    } finally { setLegacySavingId(null); }
+  };
+
   // ===== YT Import handlers =====
   const onYtFetch = async (e: React.FormEvent) => {
     e.preventDefault();
