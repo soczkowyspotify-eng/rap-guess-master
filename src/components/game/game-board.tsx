@@ -26,10 +26,16 @@ export function GameBoard({ game, cover, hideAnswerOnLoss = false }: Props) {
   // Reset playera gdy zmienia się track
   useEffect(() => { player.stop(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [game.track?.id]);
 
+  // Po zakończeniu rundy odtwórz pełny utwór dopóki użytkownik nie kliknie dalej
+  const ended = game.status !== "playing";
+  useEffect(() => {
+    if (ended) player.playFull();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [ended, game.track?.id]);
+
   if (!game.track) return null;
 
   const playing = player.playing;
-  const ended = game.status !== "playing";
   const won = game.status === "won";
 
   return (
@@ -46,8 +52,11 @@ export function GameBoard({ game, cover, hideAnswerOnLoss = false }: Props) {
 
         <div className="flex justify-center pt-2">
           <button
-            onClick={() => playing ? player.stop() : player.play()}
-            disabled={ended}
+            onClick={() => {
+              if (playing) player.stop();
+              else if (ended) player.playFull();
+              else player.play();
+            }}
             className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center transition-all",
               "bg-ink text-paper hover:scale-105 active:scale-95 shadow-lift disabled:opacity-30 disabled:hover:scale-100",

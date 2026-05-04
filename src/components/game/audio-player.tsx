@@ -138,5 +138,29 @@ export function useAudioPlayer({ song, durationSec, onEnd, onPlayingChange, star
     });
   };
 
-  return { play, stop, playing, progress };
+  /** Odtwarzanie utworu w całości — bez auto-stopa po `durationSec`. */
+  const playFull = () => {
+    if (stopTimer.current) { window.clearTimeout(stopTimer.current); stopTimer.current = null; }
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    if (isYT) {
+      const p = ytRef.current;
+      if (!p?.seekTo) return;
+      try {
+        p.seekTo(0, true);
+        p.unMute?.();
+        p.playVideo();
+        setPlaying(true); onPlayingChange?.(true); setProgress(0);
+      } catch {}
+      return;
+    }
+    const el = audioRef.current; if (!el) return;
+    el.currentTime = 0;
+    el.play().then(() => {
+      setPlaying(true); onPlayingChange?.(true); setProgress(0);
+    }).catch(() => {
+      setPlaying(false); onPlayingChange?.(false);
+    });
+  };
+
+  return { play, playFull, stop, playing, progress };
 }
