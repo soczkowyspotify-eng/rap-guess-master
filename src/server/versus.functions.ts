@@ -6,6 +6,7 @@ import { allSongs } from "@/lib/game-data";
 const PlayerSchema = z.object({
   playerId: z.string().min(8).max(64),
   nick: z.string().trim().min(1).max(24),
+  mode: z.enum(["classic", "blitz"]).optional(),
 });
 
 const MatchIdSchema = z.object({
@@ -34,13 +35,15 @@ function pickRandomTrackIds(n: number): string[] {
 export const createMatch = createServerFn({ method: "POST" })
   .inputValidator((d) => PlayerSchema.parse(d))
   .handler(async ({ data }) => {
-    const trackIds = pickRandomTrackIds(8);
+    const mode = data.mode ?? "classic";
+    const trackIds = pickRandomTrackIds(mode === "blitz" ? 5 : 8);
     const { data: row, error } = await supabaseAdmin
       .from("versus_matches")
       .insert({
         host_player_id: data.playerId,
         host_nick: data.nick.trim(),
         track_ids: trackIds,
+        mode,
       })
       .select("id")
       .single();
@@ -188,7 +191,7 @@ export const submitRoundResult = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: m, error } = await supabaseAdmin
       .from("versus_matches")
-      .select("host_player_id, guest_player_id, status, current_round, host_score, guest_score, track_ids")
+      .select("host_player_id, guest_player_id, status, current_round, host_score, guest_score, track_ids, mode")
       .eq("id", data.matchId)
       .single();
     if (error || !m) throw new Error("Nie ma takiego meczu");
@@ -238,13 +241,16 @@ export const submitRoundResult = createServerFn({ method: "POST" })
     const newHost = Number(m.host_score) + hostPts;
     const newGuest = Number(m.guest_score) + guestPts;
     const completedRound = m.current_round;
+    const isBlitz = (m as any).mode === "blitz";
     const REGULAR = 5;
-    const MAX = 8;
+    const MAX = isBlitz ? 5 : 8;
 
     let nextStatus: "playing" | "finished" = "playing";
     let nextRound = completedRound + 1;
 
-    if (completedRound < REGULAR) {
+    if (isBlitz) {
+      if (completedRound >= REGULAR) nextStatus = "finished";
+    } else if (completedRound < REGULAR) {
       // Normalna faza: pierwszy do 3 wygrywa wcześniej.
       if (newHost >= 3 || newGuest >= 3) nextStatus = "finished";
     } else {
@@ -273,7 +279,7 @@ export const rematch = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: m, error } = await supabaseAdmin
       .from("versus_matches")
-      .select("host_player_id, host_nick, guest_player_id, guest_nick, status")
+      .select("host_player_id, host_nick, guest_player_id, guest_nick, status, mode")
       .eq("id", data.matchId)
       .single();
     if (error || !m) throw new Error("Nie ma takiego meczu");
@@ -281,7 +287,8 @@ export const rematch = createServerFn({ method: "POST" })
     if (m.host_player_id !== data.playerId && m.guest_player_id !== data.playerId) {
       throw new Error("Nie jesteś w tym meczu");
     }
-    const trackIds = pickRandomTrackIds(8);
+    const mode = (m as any).mode ?? "classic";
+    const trackIds = pickRandomTrackIds(mode === "blitz" ? 5 : 8);
     const { data: row, error: insErr } = await supabaseAdmin
       .from("versus_matches")
       .insert({
@@ -290,9 +297,92 @@ export const rematch = createServerFn({ method: "POST" })
         guest_player_id: m.guest_player_id,
         guest_nick: m.guest_nick,
         track_ids: trackIds,
+        mode,
+        status: "playing",
+        current_round: 1,
       })
       .select("id")
       .single();
     if (insErr) throw new Error(insErr.message);
     return { id: row!.id as string };
+  });
+
+/** Gracz prosi o rewanż — ustawia flagę. Drugi gracz zobaczy popup. */
+export const requestRematch = createServerFn({ method: "POST" })
+  .inputValidator((d) => MatchIdSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { data: m, error } = await supabaseAdmin
+      .from("versus_matches")
+      .select("host_player_id, guest_player_id, status, rematch_requested_by, rematch_match_id")
+      .eq("id", data.matchId)
+      .single();
+    if (error || !m) throw new Error("Nie ma takiego meczu");
+    if (m.status !== "finished") throw new Error("Mecz jeszcze trwa");
+    if (m.host_player_id !== data.playerId && m.guest_player_id !== data.playerId) {
+      throw new Error("Nie jesteś w tym meczu");
+    }
+    if ((m as any).rematch_match_id) {
+      return { ok: true, rematchId: (m as any).rematch_match_id as string };
+    }
+    const { error: uErr } = await supabaseAdmin
+      .from("versus_matches")
+      .update({ rematch_requested_by: data.playerId })
+      .eq("id", data.matchId);
+    if (uErr) throw new Error(uErr.message);
+    return { ok: true };
+  });
+
+/** Odpowiedź na rewanż — accept tworzy nowy mecz, decline czyści flagę. */
+export const respondRematch = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z.object({
+      matchId: z.string().uuid(),
+      playerId: z.string().min(8).max(64),
+      accept: z.boolean(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { data: m, error } = await supabaseAdmin
+      .from("versus_matches")
+      .select("host_player_id, host_nick, guest_player_id, guest_nick, status, mode, rematch_requested_by, rematch_match_id")
+      .eq("id", data.matchId)
+      .single();
+    if (error || !m) throw new Error("Nie ma takiego meczu");
+    if (m.host_player_id !== data.playerId && m.guest_player_id !== data.playerId) {
+      throw new Error("Nie jesteś w tym meczu");
+    }
+    const requester = (m as any).rematch_requested_by as string | null;
+    if (!requester || requester === data.playerId) throw new Error("Brak zaproszenia");
+    if (!data.accept) {
+      await supabaseAdmin
+        .from("versus_matches")
+        .update({ rematch_requested_by: null })
+        .eq("id", data.matchId);
+      return { ok: true, accepted: false };
+    }
+    if ((m as any).rematch_match_id) {
+      return { ok: true, accepted: true, rematchId: (m as any).rematch_match_id as string };
+    }
+    const mode = (m as any).mode ?? "classic";
+    const trackIds = pickRandomTrackIds(mode === "blitz" ? 5 : 8);
+    const { data: row, error: insErr } = await supabaseAdmin
+      .from("versus_matches")
+      .insert({
+        host_player_id: m.host_player_id,
+        host_nick: m.host_nick,
+        guest_player_id: m.guest_player_id,
+        guest_nick: m.guest_nick,
+        track_ids: trackIds,
+        mode,
+        status: "playing",
+        current_round: 1,
+      })
+      .select("id")
+      .single();
+    if (insErr) throw new Error(insErr.message);
+    await supabaseAdmin
+      .from("versus_matches")
+      .update({ rematch_match_id: row!.id, rematch_requested_by: null })
+      .eq("id", data.matchId);
+    return { ok: true, accepted: true, rematchId: row!.id as string };
   });

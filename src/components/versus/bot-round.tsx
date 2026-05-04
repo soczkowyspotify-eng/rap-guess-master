@@ -9,8 +9,12 @@ import { GuessSearch } from "@/components/game/guess-search";
 import { GuessList } from "@/components/game/guess-list";
 import { useAudioPlayer } from "@/components/game/audio-player";
 import { ScoreBar } from "./score-bar";
+import { RoundTimer } from "./round-timer";
 import { planBotRound, type BotDifficulty, BOT_PROFILES } from "@/lib/versus-bot";
 import { cn } from "@/lib/utils";
+
+const BLITZ_CONF = { attempts: 5, durations: [1, 2, 4, 7, 10] as number[] };
+const BLITZ_TIMER_SEC = 10;
 
 type LocalGuess = { trackId: string; correct: boolean; skipped?: boolean };
 
@@ -23,12 +27,15 @@ interface Props {
   difficulty: BotDifficulty;
   myNick: string;
   totalRounds: number;
+  variant?: "classic" | "blitz";
   /** Wywoływane gdy mecz się kończy: zwraca finalny wynik */
   onMatchEnd: (myScore: number, botScore: number, myRoundsWon: number, botRoundsWon: number) => void;
 }
 
-export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: Props) {
-  const conf = DIFFICULTY.normal;
+export function VersusBotMatch({ difficulty, myNick, totalRounds, variant = "classic", onMatchEnd }: Props) {
+  const isBlitz = variant === "blitz";
+  const conf = isBlitz ? BLITZ_CONF : DIFFICULTY.normal;
+  const effectiveTotal = isBlitz ? 5 : totalRounds;
   const pool = useMemo(() => allSongs(), []);
 
   // Wybieramy tracki na cały mecz na starcie
@@ -36,13 +43,13 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: 
     const out: Song[] = [];
     const used = new Set<string>();
     let guard = 0;
-    while (out.length < totalRounds && guard < totalRounds * 50) {
+    while (out.length < effectiveTotal && guard < effectiveTotal * 50) {
       const s = pool[Math.floor(Math.random() * pool.length)];
       if (!used.has(s.id)) { out.push(s); used.add(s.id); }
       guard++;
     }
     return out;
-  }, [pool, totalRounds]);
+  }, [pool, effectiveTotal]);
 
   const bot = BOT_PROFILES[difficulty];
   const [round, setRound] = useState(1);
@@ -58,6 +65,7 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: 
   const [guesses, setGuesses] = useState<LocalGuess[]>([]);
   const [myResult, setMyResult] = useState<RoundResult | null>(null);
   const [botResult, setBotResult] = useState<RoundResult | null>(null);
+  const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
   const botPlanRef = useRef<ReturnType<typeof planBotRound> | null>(null);
   const botTimeoutRef = useRef<number | null>(null);
 
@@ -68,16 +76,18 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: 
     setGuesses([]);
     setMyResult(null);
     setBotResult(null);
+    setTimerStartedAt(null);
     const plan = planBotRound(conf.attempts, difficulty);
     botPlanRef.current = plan;
     if (botTimeoutRef.current) window.clearTimeout(botTimeoutRef.current);
+    const botDelay = isBlitz ? Math.min(plan.thinkMs, BLITZ_TIMER_SEC * 1000 - 500) : plan.thinkMs;
     botTimeoutRef.current = window.setTimeout(() => {
       setBotResult({ attemptsUsed: plan.attemptsUsed, correct: plan.correct });
-    }, plan.thinkMs);
+    }, botDelay);
     return () => {
       if (botTimeoutRef.current) window.clearTimeout(botTimeoutRef.current);
     };
-  }, [round, difficulty, conf.attempts, matchOver]);
+  }, [round, difficulty, conf.attempts, matchOver, isBlitz]);
 
   // Po obu wynikach — rozstrzygnij rundę i (po 3.5s) przejdź dalej
   useEffect(() => {
@@ -102,13 +112,17 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: 
     setBotRoundsWon(newBotRW);
 
     const t = window.setTimeout(() => {
-      const REGULAR = 5;
       let isOver = false;
-      if (round < REGULAR) {
-        isOver = newMy >= 3 || newBot >= 3;
+      if (isBlitz) {
+        isOver = round >= 5;
       } else {
-        if (newMy !== newBot) isOver = true;
-        else if (round >= totalRounds) isOver = true;
+        const REGULAR = 5;
+        if (round < REGULAR) {
+          isOver = newMy >= 3 || newBot >= 3;
+        } else {
+          if (newMy !== newBot) isOver = true;
+          else if (round >= totalRounds) isOver = true;
+        }
       }
       if (isOver) {
         setMatchOver(true);
@@ -123,6 +137,10 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: 
 
   const finishedThisRound = !!myResult;
 
+  const onExpire = () => {
+    if (!myResult) setMyResult({ attemptsUsed: conf.attempts, correct: false });
+  };
+
   return (
     <div className="space-y-6 max-w-xl mx-auto">
       <ScoreBar
@@ -131,7 +149,11 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: 
         hostScore={myScore}
         guestScore={botScore}
         youAreHost={true}
-        currentRound={Math.min(round, totalRounds)}
+        currentRound={Math.min(round, effectiveTotal)}
+        variant={variant}
+        timer={isBlitz && !finishedThisRound ? (
+          <RoundTimer startedAt={timerStartedAt} totalSec={BLITZ_TIMER_SEC} onExpire={onExpire} />
+        ) : undefined}
       />
 
       <div className="text-center text-xs font-mono text-ink-muted">
@@ -147,6 +169,7 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: 
           conf={conf}
           attemptIdx={attemptIdx}
           guesses={guesses}
+          onPlayed={() => setTimerStartedAt((t) => t ?? Date.now())}
           onGuess={(song) => {
             if (sameSong(song, track)) {
               setGuesses((g) => [...g, { trackId: track.id, correct: true }]);
@@ -173,7 +196,7 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: 
 }
 
 function PlayArea({
-  track, pool, conf, attemptIdx, guesses, onGuess, onSkip,
+  track, pool, conf, attemptIdx, guesses, onGuess, onSkip, onPlayed,
 }: {
   track: Song;
   pool: Song[];
@@ -182,6 +205,7 @@ function PlayArea({
   guesses: LocalGuess[];
   onGuess: (s: Song) => void;
   onSkip: () => void;
+  onPlayed?: () => void;
 }) {
   const duration = conf.durations[Math.min(attemptIdx, conf.durations.length - 1)];
   const player = useAudioPlayer({ song: track, durationSec: duration, startSec: track.startSec ?? 0 });
@@ -195,7 +219,10 @@ function PlayArea({
         <Waveform progress={player.progress} playing={playing} />
         <div className="flex justify-center pt-2">
           <button
-            onClick={() => (playing ? player.stop() : player.play())}
+            onClick={() => {
+              if (playing) player.stop();
+              else { player.play(); onPlayed?.(); }
+            }}
             className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center bg-ink text-paper hover:scale-105 active:scale-95 shadow-lift",
             )}

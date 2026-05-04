@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Bot, Trophy, RotateCcw, Home, Sparkles } from "lucide-react";
+import { Bot, Trophy, RotateCcw, Home, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ function VersusBotPage() {
   const [phase, setPhase] = useState<"lobby" | "playing" | "result">("lobby");
   const [nick, setNick] = useState("");
   const [difficulty, setDifficulty] = useState<BotDifficulty>("normal");
+  const [mode, setMode] = useState<"classic" | "blitz">("classic");
   const [result, setResult] = useState<FinalResult | null>(null);
   const [matchKey, setMatchKey] = useState(0);
 
@@ -77,6 +78,8 @@ function VersusBotPage() {
             onNickChange={setNick}
             difficulty={difficulty}
             onDifficultyChange={setDifficulty}
+            mode={mode}
+            onModeChange={setMode}
             onStart={start}
             onBack={() => navigate({ to: "/versus" })}
           />
@@ -87,7 +90,8 @@ function VersusBotPage() {
             key={matchKey}
             difficulty={difficulty}
             myNick={nick.trim() || "Ty"}
-            totalRounds={8}
+            totalRounds={mode === "blitz" ? 5 : 8}
+            variant={mode}
             onMatchEnd={handleEnd}
           />
         )}
@@ -106,12 +110,14 @@ function VersusBotPage() {
 }
 
 function Lobby({
-  nick, onNickChange, difficulty, onDifficultyChange, onStart, onBack,
+  nick, onNickChange, difficulty, onDifficultyChange, mode, onModeChange, onStart, onBack,
 }: {
   nick: string;
   onNickChange: (v: string) => void;
   difficulty: BotDifficulty;
   onDifficultyChange: (d: BotDifficulty) => void;
+  mode: "classic" | "blitz";
+  onModeChange: (m: "classic" | "blitz") => void;
   onStart: () => void;
   onBack: () => void;
 }) {
@@ -128,6 +134,40 @@ function Lobby({
         <div className="space-y-2">
           <label className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">Twój nick</label>
           <NickInput value={nick} onChange={onNickChange} />
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">Tryb meczu</div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => onModeChange("classic")}
+              className={cn(
+                "rounded-2xl border p-3 text-left transition-all",
+                mode === "classic" ? "border-primary bg-primary/5 shadow-lift" : "border-hairline hover:border-ink-muted",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-primary" />
+                <span className="font-display text-base">Klasyczny</span>
+              </div>
+              <div className="text-[11px] text-ink-muted mt-1">Best of 5 + dogrywka</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => onModeChange("blitz")}
+              className={cn(
+                "rounded-2xl border p-3 text-left transition-all",
+                mode === "blitz" ? "border-primary bg-primary/5 shadow-lift" : "border-hairline hover:border-ink-muted",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-primary" />
+                <span className="font-display text-base">Blitz</span>
+              </div>
+              <div className="text-[11px] text-ink-muted mt-1">5 rund · 10 s</div>
+            </button>
+          </div>
         </div>
 
         <div className="space-y-3">

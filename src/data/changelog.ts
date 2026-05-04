@@ -8,6 +8,24 @@ export interface ChangelogEntry {
 // Najnowszy wpis na górze. Po dodaniu nowej wersji userzy zobaczą popup raz.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.3.0",
+    date: "2026-05-04",
+    title: "Versus Blitz, rewanże i lepszy share daily",
+    changes: [
+      "Nowy tryb Versus 1v1 ze znajomym — link, lobby i realtime",
+      "Versus vs Bot z 3 poziomami trudności: Mata, Białas i Peja",
+      "Versus Blitz — 5 rund, max 10 s sampla, 10 s na odpowiedź",
+      "Dogrywka w klasycznym Versusie przy remisie po 5 rundzie (do 8 rund)",
+      "Rewanż w PvP z popupem zaproszenia — przyjmij lub odrzuć",
+      "Po zgadnięciu utwór gra dalej w pełnej wersji",
+      "Statystyki Versus i nowe osiągnięcia",
+      "Lepsze wyszukiwanie utworów (np. „white 2115 balmain” już działa)",
+      "Ładniejszy share wyniku Daily — z tytułem utworu i przyciskiem Udostępnij",
+      "Płyta winylowa w trybie ciemnym ma teraz wyraźną krawędź i nie zlewa się z tłem",
+      "Drobny refresh UI/UX i poprawki bezpieczeństwa",
+    ],
+  },
+  {
     version: "2.2.0",
     date: "2026-05-04",
     title: "Świeża paczka utworów i lepsza gra",

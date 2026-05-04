@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Trophy, RotateCcw, Home, Sparkles } from "lucide-react";
+import { Trophy, RotateCcw, Home, Sparkles, Check, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { rematch } from "@/server/versus.functions";
+import { requestRematch, respondRematch } from "@/server/versus.functions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { VersusMatch, VersusRoundResult } from "@/hooks/use-versus";
 import { recordVersusMatch } from "@/lib/versus-stats";
 import { ACHIEVEMENTS } from "@/lib/achievements";
@@ -17,7 +18,8 @@ interface Props {
 
 export function VersusResult({ match, results, playerId }: Props) {
   const navigate = useNavigate();
-  const rematchFn = useServerFn(rematch);
+  const requestFn = useServerFn(requestRematch);
+  const respondFn = useServerFn(respondRematch);
   const [busy, setBusy] = useState(false);
   const [unlocked, setUnlocked] = useState<string[]>([]);
 
@@ -27,6 +29,10 @@ export function VersusResult({ match, results, playerId }: Props) {
   const myNick = isHost ? match.host_nick : match.guest_nick ?? "";
   const oppNick = isHost ? match.guest_nick ?? "—" : match.host_nick;
   const oppId = isHost ? match.guest_player_id : match.host_player_id;
+
+  const requester = match.rematch_requested_by;
+  const iRequested = !!requester && requester === playerId;
+  const oppRequested = !!requester && requester !== playerId;
 
   const outcome = myScore > oppScore ? "win" : myScore < oppScore ? "lose" : "draw";
 
@@ -59,11 +65,36 @@ export function VersusResult({ match, results, playerId }: Props) {
 
   const unlockedAchievements = ACHIEVEMENTS.filter((a) => unlocked.includes(a.id));
 
+  // Auto-redirect gdy rewanż zaakceptowany
+  useEffect(() => {
+    if (match.rematch_match_id) {
+      navigate({ to: "/versus/$matchId", params: { matchId: match.rematch_match_id } });
+    }
+  }, [match.rematch_match_id, navigate]);
+
   const handleRematch = async () => {
     setBusy(true);
     try {
-      const r = await rematchFn({ data: { matchId: match.id, playerId } });
-      navigate({ to: "/versus/$matchId", params: { matchId: r.id } });
+      const r = await requestFn({ data: { matchId: match.id, playerId } });
+      if ((r as any).rematchId) {
+        navigate({ to: "/versus/$matchId", params: { matchId: (r as any).rematchId } });
+      } else {
+        toast.success("Wysłano propozycję rewanżu");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Nie udało się");
+    } finally { setBusy(false); }
+  };
+
+  const respond = async (accept: boolean) => {
+    setBusy(true);
+    try {
+      const r = await respondFn({ data: { matchId: match.id, playerId, accept } });
+      if (accept && (r as any).rematchId) {
+        navigate({ to: "/versus/$matchId", params: { matchId: (r as any).rematchId } });
+      } else if (!accept) {
+        toast("Odrzucono rewanż");
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Nie udało się");
     } finally { setBusy(false); }
@@ -108,13 +139,32 @@ export function VersusResult({ match, results, playerId }: Props) {
       )}
 
       <div className="flex gap-3 justify-center flex-wrap">
-        <Button onClick={handleRematch} disabled={busy} className="rounded-full h-11">
-          <RotateCcw className="h-4 w-4" /> Rewanż
+        <Button onClick={handleRematch} disabled={busy || iRequested || !oppId} className="rounded-full h-11">
+          <RotateCcw className="h-4 w-4" /> {iRequested ? "Czekam na zgodę…" : "Rewanż"}
         </Button>
         <Button variant="outline" onClick={() => navigate({ to: "/versus" })} className="rounded-full h-11">
           <Home className="h-4 w-4" /> Nowy mecz
         </Button>
       </div>
+
+      <Dialog open={oppRequested} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Propozycja rewanżu</DialogTitle>
+            <DialogDescription>
+              <span className="font-medium text-ink">{oppNick}</span> proponuje Ci rewanż. Grasz dalej?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 mt-4">
+            <Button onClick={() => respond(true)} disabled={busy} className="flex-1 rounded-full h-11">
+              <Check className="h-4 w-4" /> Przyjmij
+            </Button>
+            <Button onClick={() => respond(false)} disabled={busy} variant="outline" className="flex-1 rounded-full h-11">
+              <XIcon className="h-4 w-4" /> Odrzuć
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
