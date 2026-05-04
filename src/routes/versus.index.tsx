@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Swords, Plus, LogIn } from "lucide-react";
+import { Swords, Plus, LogIn, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,27 @@ function VersusHomePage() {
               <LogIn className="h-4 w-4" /> Dołącz
             </Button>
           </div>
+
+          <div className="flex items-center gap-3 text-xs font-mono text-ink-muted">
+            <div className="flex-1 h-px bg-hairline" /> LUB <div className="flex-1 h-px bg-hairline" />
+          </div>
+
+          <button
+            onClick={() => {
+              if (nick.trim()) VersusLocal.saveSuggestedNick(nick.trim());
+              navigate({ to: "/versus/bot" });
+            }}
+            className="w-full rounded-2xl border border-hairline hover:border-primary/50 hover:bg-primary/5 transition-all p-4 flex items-center gap-3 text-left"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/10 grid place-items-center text-primary">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-display text-base">Zagraj z botem</div>
+              <div className="text-xs text-ink-muted">Solo, 3 poziomy trudności. Bez czekania.</div>
+            </div>
+            <span className="text-ink-muted">→</span>
+          </button>
         </div>
       </main>
     </div>
