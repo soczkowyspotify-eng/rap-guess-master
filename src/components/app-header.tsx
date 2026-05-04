@@ -11,6 +11,7 @@ const NAV = [
   { to: "/daily", key: "nav.daily" },
   { to: "/endless", key: "nav.endless" },
   { to: "/albums", key: "nav.albums" },
+  { to: "/versus", key: "nav.versus" },
   { to: "/suggest", key: "nav.suggest" },
   { to: "/stats", key: "nav.stats" },
   { to: "/settings", key: "nav.settings" },
