@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/app-header";
 import { albums } from "@/lib/game-data";
 import { Storage } from "@/lib/storage";
 import { loadYtAlbums, subscribeYt, getYtAlbums } from "@/lib/yt-pool";
+import { useI18n } from "@/i18n/i18n";
 
 export const Route = createFileRoute("/albums/")({
   head: () => ({ meta: [{ title: "Albumy — RAP GUESSER" }, { name: "description", content: "Wybierz album i zgaduj jego tracki." }] }),
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/albums/")({
 });
 
 function AlbumsPage() {
+  const { t } = useI18n();
   useSyncExternalStore(subscribeYt, () => getYtAlbums().length, () => 0);
   useEffect(() => { loadYtAlbums(); }, []);
   const list = albums().slice().sort((a, b) => Number(!!b.recommended) - Number(!!a.recommended));
@@ -20,9 +22,9 @@ function AlbumsPage() {
       <AppHeader />
       <main className="max-w-6xl mx-auto px-6 py-10">
         <div className="mb-10">
-          <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">Tryb album</p>
-          <h1 className="font-display text-4xl md:text-5xl mt-2">Wybierz płytę</h1>
-          <p className="mt-3 text-ink-muted max-w-lg">Każdy album to osobne wyzwanie. Zgaduj wszystkie tracki, śledź postęp i bij swój rekord.</p>
+          <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">{t("albums.tag")}</p>
+          <h1 className="font-display text-4xl md:text-5xl mt-2">{t("albums.title")}</h1>
+          <p className="mt-3 text-ink-muted max-w-lg">{t("albums.intro")}</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {list.map((a, i) => {
@@ -40,7 +42,7 @@ function AlbumsPage() {
                 <div className="aspect-square rounded-2xl overflow-hidden border border-hairline relative shadow-soft group-hover:shadow-lift transition-all duration-300 group-hover:-translate-y-1">
                   <img src={a.cover} alt={a.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   {a.recommended && (
-                    <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full shadow-soft animate-pulse-glow">⭐ Polecamy</div>
+                    <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full shadow-soft animate-pulse-glow">{t("albums.recommended")}</div>
                   )}
                   {done === a.songs.length && (
                     <div className="absolute top-3 right-3 bg-success text-paper text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full animate-scale-in">100%</div>
