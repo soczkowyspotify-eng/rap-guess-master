@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Play, Pause } from "lucide-react";
 import { allSongs, DIFFICULTY, sameSong } from "@/lib/game-data";
 import type { Song } from "@/data/songs";
@@ -151,9 +151,6 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, variant = "cla
         youAreHost={true}
         currentRound={Math.min(round, effectiveTotal)}
         variant={variant}
-        timer={isBlitz && !finishedThisRound ? (
-          <RoundTimer startedAt={timerStartedAt} totalSec={BLITZ_TIMER_SEC} onExpire={onExpire} />
-        ) : undefined}
       />
 
       <div className="text-center text-xs font-mono text-ink-muted">
@@ -170,6 +167,9 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, variant = "cla
           attemptIdx={attemptIdx}
           guesses={guesses}
           onPlayed={() => setTimerStartedAt((t) => t ?? Date.now())}
+          timer={isBlitz ? (
+            <RoundTimer startedAt={timerStartedAt} totalSec={BLITZ_TIMER_SEC} onExpire={onExpire} />
+          ) : null}
           onGuess={(song) => {
             if (sameSong(song, track)) {
               setGuesses((g) => [...g, { trackId: track.id, correct: true }]);
@@ -196,7 +196,7 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, variant = "cla
 }
 
 function PlayArea({
-  track, pool, conf, attemptIdx, guesses, onGuess, onSkip, onPlayed,
+  track, pool, conf, attemptIdx, guesses, onGuess, onSkip, onPlayed, timer,
 }: {
   track: Song;
   pool: Song[];
@@ -206,6 +206,7 @@ function PlayArea({
   onGuess: (s: Song) => void;
   onSkip: () => void;
   onPlayed?: () => void;
+  timer?: ReactNode;
 }) {
   const duration = conf.durations[Math.min(attemptIdx, conf.durations.length - 1)];
   const player = useAudioPlayer({ song: track, durationSec: duration, startSec: track.startSec ?? 0 });
@@ -213,7 +214,14 @@ function PlayArea({
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <Vinyl spinning={playing} />
+      <div className="relative">
+        <Vinyl spinning={playing} />
+        {timer && (
+          <div className="absolute -top-2 -right-2 sm:-right-6 bg-card border border-hairline rounded-full p-1 shadow-lift z-10">
+            {timer}
+          </div>
+        )}
+      </div>
       <div className="w-full space-y-4">
         <DurationStepper durations={conf.durations} currentIdx={attemptIdx} guesses={guesses} />
         <Waveform progress={player.progress} playing={playing} />
