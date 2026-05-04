@@ -19,8 +19,6 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const PW_KEY = "rg.admin.pw";
-
 function extractVid(input: string): string | null {
   const t = input.trim();
   if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return t;
