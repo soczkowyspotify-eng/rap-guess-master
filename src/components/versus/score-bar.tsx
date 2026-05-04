@@ -13,7 +13,6 @@ interface Props {
 }
 
 export function ScoreBar({ hostNick, guestNick, hostScore, guestScore, youAreHost, currentRound, variant = "classic", timer }: Props) {
-  const totalRounds = variant === "blitz" ? 5 : 5;
   return (
     <div className="relative flex items-center justify-between gap-4 bg-card border border-hairline rounded-2xl p-4">
       <Side nick={hostNick} score={hostScore} isYou={youAreHost} align="left" />
@@ -36,7 +35,6 @@ export function ScoreBar({ hostNick, guestNick, hostScore, guestScore, youAreHos
           {timer}
         </div>
       )}
-      {totalRounds /* keep */ && null}
     </div>
   );
 }
