@@ -90,7 +90,7 @@ function VersusMatchPage() {
         )}
 
         {match && isParticipant && match.status === "finished" && (
-          <VersusResult match={match} playerId={playerId} />
+          <VersusResult match={match} results={results} playerId={playerId} />
         )}
       </main>
     </div>
