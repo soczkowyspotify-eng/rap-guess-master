@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuggestRouteImport } from './routes/suggest'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as ShareRouteImport } from './routes/share'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as EndlessRouteImport } from './routes/endless'
 import { Route as DailyRouteImport } from './routes/daily'
@@ -30,6 +31,11 @@ const SuggestRoute = SuggestRouteImport.update({
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareRoute = ShareRouteImport.update({
+  id: '/share',
+  path: '/share',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
   '/stats': typeof StatsRoute
   '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
   '/stats': typeof StatsRoute
   '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
   '/stats': typeof StatsRoute
   '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/daily'
     | '/endless'
     | '/settings'
+    | '/share'
     | '/stats'
     | '/suggest'
     | '/albums/$albumId'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/daily'
     | '/endless'
     | '/settings'
+    | '/share'
     | '/stats'
     | '/suggest'
     | '/albums/$albumId'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/daily'
     | '/endless'
     | '/settings'
+    | '/share'
     | '/stats'
     | '/suggest'
     | '/albums/$albumId'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   DailyRoute: typeof DailyRoute
   EndlessRoute: typeof EndlessRoute
   SettingsRoute: typeof SettingsRoute
+  ShareRoute: typeof ShareRoute
   StatsRoute: typeof StatsRoute
   SuggestRoute: typeof SuggestRoute
   AlbumsAlbumIdRoute: typeof AlbumsAlbumIdRoute
@@ -200,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/stats'
       fullPath: '/stats'
       preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share': {
+      id: '/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof ShareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -281,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   DailyRoute: DailyRoute,
   EndlessRoute: EndlessRoute,
   SettingsRoute: SettingsRoute,
+  ShareRoute: ShareRoute,
   StatsRoute: StatsRoute,
   SuggestRoute: SuggestRoute,
   AlbumsAlbumIdRoute: AlbumsAlbumIdRoute,
@@ -292,3 +313,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
