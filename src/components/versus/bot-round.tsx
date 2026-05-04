@@ -102,7 +102,14 @@ export function VersusBotMatch({ difficulty, myNick, totalRounds, onMatchEnd }: 
     setBotRoundsWon(newBotRW);
 
     const t = window.setTimeout(() => {
-      const isOver = newMy >= 3 || newBot >= 3 || round >= totalRounds;
+      const REGULAR = 5;
+      let isOver = false;
+      if (round < REGULAR) {
+        isOver = newMy >= 3 || newBot >= 3;
+      } else {
+        if (newMy !== newBot) isOver = true;
+        else if (round >= totalRounds) isOver = true;
+      }
       if (isOver) {
         setMatchOver(true);
         onMatchEnd(newMy, newBot, newMyRW, newBotRW);
