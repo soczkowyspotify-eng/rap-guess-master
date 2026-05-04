@@ -5,6 +5,7 @@ import { GameBoard } from "@/components/game/game-board";
 import { useGame } from "@/hooks/use-game";
 import { Storage } from "@/lib/storage";
 import { DIFFICULTY, type Difficulty } from "@/lib/game-data";
+import { useI18n } from "@/i18n/i18n";
 
 export const Route = createFileRoute("/endless")({
   head: () => ({ meta: [{ title: "Endless — RAP GUESSER" }, { name: "description", content: "Zgaduj bez końca. Buduj streak." }] }),
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/endless")({
 });
 
 function EndlessPage() {
+  const { t } = useI18n();
   const [diff, setDiff] = useState<Difficulty>(() => Storage.getSettings().difficulty);
   const [seed, setSeed] = useState(0);
   const game = useGame({ mode: "endless", difficulty: diff });
@@ -29,8 +31,8 @@ function EndlessPage() {
       <AppHeader />
       <main className="max-w-6xl mx-auto px-6 py-10" key={seed}>
         <div className="text-center mb-8 space-y-3">
-          <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">Endless</p>
-          <h1 className="font-display text-4xl md:text-5xl">Seria: {stats.endlessCurrent} <span className="text-ink-muted">· best {stats.endlessBest}</span></h1>
+          <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">{t("endless.tag")}</p>
+          <h1 className="font-display text-4xl md:text-5xl">{t("endless.streak")}: {stats.endlessCurrent} <span className="text-ink-muted">· {t("endless.best")} {stats.endlessBest}</span></h1>
           <div className="inline-flex p-1 bg-muted rounded-full">
             {(Object.keys(DIFFICULTY) as Difficulty[]).map(d => (
               <button
@@ -49,7 +51,7 @@ function EndlessPage() {
         {ended && (
           <div className="mt-10 flex justify-center">
             <button onClick={game.next} className="px-6 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90">
-              Następny track →
+              {t("endless.next")}
             </button>
           </div>
         )}

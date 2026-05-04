@@ -5,6 +5,7 @@ import { useGame } from "@/hooks/use-game";
 import { albumById } from "@/lib/game-data";
 import { Storage } from "@/lib/storage";
 import { ArrowLeft, Check } from "lucide-react";
+import { useI18n } from "@/i18n/i18n";
 
 export const Route = createFileRoute("/albums/$albumId")({
   head: ({ params }) => {
@@ -19,14 +20,15 @@ export const Route = createFileRoute("/albums/$albumId")({
     <div className="min-h-screen bg-paper">
       <AppHeader />
       <main className="max-w-2xl mx-auto px-6 py-20 text-center">
-        <h1 className="font-display text-4xl">Nie ma takiego albumu</h1>
-        <Link to="/albums" className="mt-6 inline-block underline underline-offset-4">← Wróć do listy</Link>
+        <h1 className="font-display text-4xl">Album not found</h1>
+        <Link to="/albums" className="mt-6 inline-block underline underline-offset-4">← Back</Link>
       </main>
     </div>
   ),
 });
 
 function AlbumPage() {
+  const { t } = useI18n();
   const { albumId } = Route.useParams();
   const album = albumById(albumId);
   if (!album) throw notFound();
@@ -41,13 +43,13 @@ function AlbumPage() {
       <AppHeader />
       <main className="max-w-6xl mx-auto px-6 py-10">
         <Link to="/albums" className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink mb-8">
-          <ArrowLeft className="h-4 w-4" /> Wszystkie albumy
+          <ArrowLeft className="h-4 w-4" /> {t("albums.allAlbums")}
         </Link>
 
         <header className="grid md:grid-cols-[200px_1fr] gap-8 items-end mb-12 pb-12 border-b border-hairline">
           <img src={album.cover} alt={album.title} className="w-full aspect-square object-cover rounded-2xl shadow-lift" />
           <div>
-            <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">Album · {album.year}</p>
+            <p className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted">{t("nav.albums")} · {album.year}</p>
             <h1 className="font-display text-4xl md:text-5xl mt-2 leading-tight">{album.title}</h1>
             <p className="mt-1 text-lg text-ink-muted">{album.artist}</p>
             <div className="mt-5 flex items-center gap-4">
@@ -61,11 +63,11 @@ function AlbumPage() {
 
         {completed ? (
           <div className="text-center py-16 space-y-6">
-            <p className="text-xs font-mono uppercase tracking-[0.3em] text-success">Album ukończony</p>
+            <p className="text-xs font-mono uppercase tracking-[0.3em] text-success">{t("albums.completed.tag")}</p>
             <h2 className="font-display text-5xl">100%</h2>
-            <p className="text-ink-muted">Wszystkie tracki zgadnięte. Spróbuj innego albumu.</p>
+            <p className="text-ink-muted">{t("albums.completed.desc")}</p>
             <Link to="/albums" className="inline-block px-6 h-11 leading-[2.75rem] rounded-full bg-ink text-paper font-medium">
-              Wybierz inny album
+              {t("albums.completed.cta")}
             </Link>
           </div>
         ) : game.track ? (
@@ -74,24 +76,24 @@ function AlbumPage() {
             {ended && (
               <div className="mt-10 flex justify-center">
                 <button onClick={game.next} className="px-6 h-11 rounded-full bg-ink text-paper text-sm font-medium hover:opacity-90">
-                  Następny track →
+                  {t("endless.next")}
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-12 text-ink-muted">Brak tracków do odgadnięcia.</div>
+          <div className="text-center py-12 text-ink-muted">{t("albums.empty")}</div>
         )}
 
         <section className="mt-16 pt-12 border-t border-hairline">
-          <h3 className="font-display text-2xl mb-6">Tracklista</h3>
+          <h3 className="font-display text-2xl mb-6">{t("albums.tracklist")}</h3>
           <ol className="grid sm:grid-cols-2 gap-1.5">
             {album.songs.map((s, i) => {
               const guessed = progress?.guessed.includes(s.id);
               return (
                 <li key={s.id} className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-muted transition">
                   <span className="font-mono text-xs text-ink-muted w-6">{String(i+1).padStart(2, "0")}</span>
-                  <span className="flex-1 truncate">{guessed ? s.title : <span className="text-ink-muted">— ukryty —</span>}</span>
+                  <span className="flex-1 truncate">{guessed ? s.title : <span className="text-ink-muted">{t("albums.hidden")}</span>}</span>
                   {guessed && <Check className="h-4 w-4 text-success" />}
                 </li>
               );

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import type { Song } from "@/data/songs";
 import { dedupeSongs, fuzzyMatch } from "@/lib/game-data";
+import { useI18n } from "@/i18n/i18n";
 
 interface Props {
   pool: Song[];
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function GuessSearch({ pool, onSubmit, onSkip, disabled }: Props) {
+  const { t } = useI18n();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
 
@@ -29,7 +31,7 @@ export function GuessSearch({ pool, onSubmit, onSkip, disabled }: Props) {
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           onChange={e => { setQ(e.target.value); setOpen(true); }}
-          placeholder="Szukaj tytułu lub artysty…"
+          placeholder={t("game.search")}
           className="w-full h-14 pl-12 pr-4 bg-card border border-hairline rounded-2xl text-base outline-none focus:border-primary transition-colors disabled:opacity-50"
         />
       </div>
@@ -51,13 +53,13 @@ export function GuessSearch({ pool, onSubmit, onSkip, disabled }: Props) {
         </div>
       )}
       <div className="mt-3 flex justify-between items-center">
-        <span className="text-xs text-ink-muted">{pool.length} tracków w bazie</span>
+        <span className="text-xs text-ink-muted">{pool.length} {t("game.poolSize")}</span>
         <button
           onClick={onSkip}
           disabled={disabled}
           className="text-sm text-ink-muted hover:text-ink underline underline-offset-4 disabled:opacity-50"
         >
-          Pomiń próbę
+          {t("game.skip")}
         </button>
       </div>
     </div>

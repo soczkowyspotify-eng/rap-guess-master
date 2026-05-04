@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ChangelogPopup } from "@/components/changelog/changelog-popup";
+import { I18nProvider } from "@/i18n/i18n";
 
 import appCss from "../styles.css?url";
 
@@ -79,9 +80,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <ThemeProvider>
-      <Outlet />
-      <ChangelogPopup />
-      <Toaster />
+      <I18nProvider>
+        <Outlet />
+        <ChangelogPopup />
+        <Toaster />
+      </I18nProvider>
     </ThemeProvider>
   );
 }
