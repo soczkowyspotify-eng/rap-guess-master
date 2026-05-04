@@ -125,15 +125,8 @@ function AdminPage() {
   const [addingAlbum, setAddingAlbum] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Auto-login z localStorage
-  useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem(PW_KEY) : null;
-    if (!saved) return;
-    setPw(saved);
-    verify({ data: { password: saved } })
-      .then(() => setAuthed(true))
-      .catch(() => localStorage.removeItem(PW_KEY));
-  }, [verify]);
+  // Brak auto-loginu — hasło admina nie jest persystowane w przeglądarce
+  // (zapobiega kradzieży przez XSS / dostęp do localStorage).
 
   const refresh = async () => {
     const { data: t } = await supabase
@@ -177,7 +170,6 @@ function AdminPage() {
     setVerifying(true);
     try {
       await verify({ data: { password: pw } });
-      localStorage.setItem(PW_KEY, pw);
       setAuthed(true);
       toast.success("Zalogowano");
     } catch (err: any) {
