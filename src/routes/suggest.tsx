@@ -25,7 +25,7 @@ function SuggestPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const a = artist.trim();
-    const t = title.trim();
+    const ttl = title.trim();
     const l = link.trim();
     if (!a || !ttl) { toast.error(t("suggest.toast.empty")); return; }
     if (a.length > 200 || ttl.length > 200 || l.length > 500) { toast.error(t("suggest.toast.long")); return; }
