@@ -6,7 +6,7 @@ import {
 import { Storage, type DailyHistoryEntry } from "@/lib/storage";
 import type { Song } from "@/data/songs";
 import { toast } from "sonner";
-import { loadYtTracks, loadYtAlbums, subscribeYt, getYtPool, getYtAlbums } from "@/lib/yt-pool";
+import { loadYtTracks, loadYtAlbums, loadLegacyOverrides, subscribeYt, getYtPool, getYtAlbums } from "@/lib/yt-pool";
 
 export type GuessResult = { trackId: string; correct: boolean; skipped?: boolean };
 export type Status = "playing" | "won" | "lost";
@@ -28,7 +28,7 @@ export function useGame({ mode, difficulty, albumId }: Options) {
     () => getYtPool().length + getYtAlbums().length,
     () => 0,
   );
-  useEffect(() => { loadYtTracks(); loadYtAlbums(); }, []);
+  useEffect(() => { loadYtTracks(); loadYtAlbums(); loadLegacyOverrides(); }, []);
 
   const pool: Song[] = useMemo(() => {
     if (mode === "album" && albumId) return songsForAlbum(albumId);

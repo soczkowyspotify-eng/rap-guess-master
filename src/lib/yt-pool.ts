@@ -4,9 +4,11 @@ import type { Album } from "@/data/albums";
 
 const LS_KEY = "rg.yt.cache.v1";
 const LS_ALBUMS_KEY = "rg.yt.albums.cache.v1";
+const LS_OVR_KEY = "rg.legacy.overrides.v1";
 
 let cache: Song[] = [];
 let albumsCache: Album[] = [];
+let overridesCache: Record<string, { start_sec: number; hidden: boolean }> = {};
 const listeners = new Set<() => void>();
 
 function seedFromLocal() {
@@ -25,6 +27,13 @@ function seedFromLocal() {
       if (Array.isArray(parsed)) albumsCache = parsed;
     }
   } catch {}
+  try {
+    const raw = localStorage.getItem(LS_OVR_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") overridesCache = parsed;
+    }
+  } catch {}
 }
 seedFromLocal();
 
@@ -36,6 +45,10 @@ export function getYtPool(): Song[] {
 
 export function getYtAlbums(): Album[] {
   return albumsCache;
+}
+
+export function getLegacyOverrides(): Record<string, { start_sec: number; hidden: boolean }> {
+  return overridesCache;
 }
 
 export function subscribeYt(fn: () => void): () => void {
@@ -94,5 +107,18 @@ export async function loadYtAlbums(): Promise<void> {
   });
   albumsCache = next;
   try { localStorage.setItem(LS_ALBUMS_KEY, JSON.stringify(next)); } catch {}
+  emit();
+}
+
+export async function loadLegacyOverrides(): Promise<void> {
+  if (typeof window === "undefined") return;
+  const { data, error } = await (supabase as any)
+    .from("legacy_song_overrides")
+    .select("song_id, start_sec, hidden");
+  if (error || !data) return;
+  const next: Record<string, { start_sec: number; hidden: boolean }> = {};
+  for (const r of data) next[r.song_id] = { start_sec: r.start_sec ?? 0, hidden: !!r.hidden };
+  overridesCache = next;
+  try { localStorage.setItem(LS_OVR_KEY, JSON.stringify(next)); } catch {}
   emit();
 }

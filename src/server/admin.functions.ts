@@ -263,3 +263,41 @@ export const deleteSuggestion = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ============= LEGACY OVERRIDES =============
+
+const UpsertOverrideSchema = PwSchema.extend({
+  song_id: z.string().min(1).max(200),
+  start_sec: z.number().int().min(0).max(3600),
+  hidden: z.boolean(),
+});
+
+export const upsertLegacyOverride = createServerFn({ method: "POST" })
+  .inputValidator((d) => UpsertOverrideSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const { error } = await (supabaseAdmin as any)
+      .from("legacy_song_overrides")
+      .upsert({
+        song_id: data.song_id,
+        start_sec: data.start_sec,
+        hidden: data.hidden,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "song_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const ResetOverrideSchema = PwSchema.extend({ song_id: z.string().min(1).max(200) });
+
+export const resetLegacyOverride = createServerFn({ method: "POST" })
+  .inputValidator((d) => ResetOverrideSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const { error } = await (supabaseAdmin as any)
+      .from("legacy_song_overrides")
+      .delete()
+      .eq("song_id", data.song_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

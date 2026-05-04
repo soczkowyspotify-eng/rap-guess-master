@@ -2,10 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
-import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement, deleteSuggestion } from "@/server/admin.functions";
+import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement, deleteSuggestion, upsertLegacyOverride, resetLegacyOverride } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
-import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink, Youtube, Search, Play } from "lucide-react";
+import { loadYtTracks, loadYtAlbums, loadLegacyOverrides } from "@/lib/yt-pool";
+import { RAW_LEGACY_SONGS } from "@/data/songs";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink, Youtube, Search, Play, Archive, EyeOff as EyeOffIcon } from "lucide-react";
 import { toast } from "sonner";
 import { fetchFromYoutube, type YtFetchedTrack } from "@/server/youtube.functions";
 
@@ -36,6 +37,13 @@ function parseStart(input: string): number {
   return 0;
 }
 
+function formatSec(s: number): string {
+  if (!s) return "";
+  const m = Math.floor(s / 60);
+  const ss = s % 60;
+  return m > 0 ? `${m}:${String(ss).padStart(2, "0")}` : String(ss);
+}
+
 interface Row { id: string; video_id: string; artist: string; title: string; created_at: string; }
 interface AlbumRow {
   id: string; cover_url: string; artist: string; title: string; year: number | null; created_at: string;
@@ -49,7 +57,7 @@ interface SuggestionRow {
   id: string; artist: string; title: string; link: string | null; created_at: string;
 }
 
-type Tab = "tracks" | "albums" | "announcements" | "suggestions" | "ytimport";
+type Tab = "tracks" | "albums" | "announcements" | "suggestions" | "ytimport" | "legacy";
 
 function AdminPage() {
   const [pw, setPw] = useState("");
@@ -67,6 +75,8 @@ function AdminPage() {
   const togAnn = useServerFn(toggleAnnouncement);
   const delSug = useServerFn(deleteSuggestion);
   const ytFetch = useServerFn(fetchFromYoutube);
+  const upsertOvr = useServerFn(upsertLegacyOverride);
+  const resetOvr = useServerFn(resetLegacyOverride);
 
   const [tab, setTab] = useState<Tab>("tracks");
 
@@ -80,6 +90,12 @@ function AdminPage() {
   const [albumRows, setAlbumRows] = useState<AlbumRow[]>([]);
   const [annRows, setAnnRows] = useState<AnnouncementRow[]>([]);
   const [sugRows, setSugRows] = useState<SuggestionRow[]>([]);
+
+  // ===== Legacy overrides state =====
+  const [legacyOverrides, setLegacyOverrides] = useState<Record<string, { start_sec: number; hidden: boolean }>>({});
+  const [legacyEdits, setLegacyEdits] = useState<Record<string, { startSec: string; hidden: boolean }>>({});
+  const [legacySearch, setLegacySearch] = useState("");
+  const [legacySavingId, setLegacySavingId] = useState<string | null>(null);
 
   // ===== YT Import state =====
   type ImportRow = YtFetchedTrack & { include: boolean; startSec: string };
@@ -141,6 +157,18 @@ function AdminPage() {
       .select("id, artist, title, link, created_at")
       .order("created_at", { ascending: false });
     setSugRows((sug ?? []) as SuggestionRow[]);
+    const { data: ovr } = await (supabase as any)
+      .from("legacy_song_overrides")
+      .select("song_id, start_sec, hidden");
+    const map: Record<string, { start_sec: number; hidden: boolean }> = {};
+    for (const r of (ovr ?? [])) map[r.song_id] = { start_sec: r.start_sec ?? 0, hidden: !!r.hidden };
+    setLegacyOverrides(map);
+    const edits: Record<string, { startSec: string; hidden: boolean }> = {};
+    for (const sId of Object.keys(map)) {
+      const o = map[sId];
+      edits[sId] = { startSec: o.start_sec ? formatSec(o.start_sec) : "", hidden: o.hidden };
+    }
+    setLegacyEdits(edits);
   };
 
   useEffect(() => { if (authed) refresh(); }, [authed]);
@@ -336,6 +364,47 @@ function AdminPage() {
     } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
   };
 
+  // ===== Legacy overrides handlers =====
+  const setLegacyEdit = (songId: string, patch: Partial<{ startSec: string; hidden: boolean }>) => {
+    setLegacyEdits((p) => ({
+      ...p,
+      [songId]: { startSec: p[songId]?.startSec ?? "", hidden: p[songId]?.hidden ?? false, ...patch },
+    }));
+  };
+
+  const onSaveLegacy = async (songId: string) => {
+    const e = legacyEdits[songId] ?? { startSec: "", hidden: false };
+    const start_sec = parseStart(e.startSec);
+    setLegacySavingId(songId);
+    try {
+      if (start_sec === 0 && !e.hidden) {
+        // Nic nie nadpisujemy → reset
+        if (legacyOverrides[songId]) {
+          await resetOvr({ data: { password: pw, song_id: songId } });
+        }
+      } else {
+        await upsertOvr({ data: { password: pw, song_id: songId, start_sec, hidden: e.hidden } });
+      }
+      await refresh();
+      await loadLegacyOverrides();
+      toast.success("Zapisano");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd");
+    } finally { setLegacySavingId(null); }
+  };
+
+  const onResetLegacy = async (songId: string) => {
+    setLegacySavingId(songId);
+    try {
+      await resetOvr({ data: { password: pw, song_id: songId } });
+      await refresh();
+      await loadLegacyOverrides();
+      toast.success("Zresetowano");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Błąd");
+    } finally { setLegacySavingId(null); }
+  };
+
   // ===== YT Import handlers =====
   const onYtFetch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -478,6 +547,10 @@ function AdminPage() {
               onClick={() => setTab("ytimport")}
               className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "ytimport" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
             ><Youtube className="h-4 w-4" /> YT Import <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/20 text-primary">BETA</span></button>
+            <button
+              onClick={() => setTab("legacy")}
+              className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "legacy" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
+            ><Archive className="h-4 w-4" /> Legacy</button>
           </div>
         </div>
 
@@ -869,6 +942,105 @@ function AdminPage() {
             </>
           )}
         </>)}
+
+        {tab === "legacy" && (() => {
+          const q = legacySearch.trim().toLowerCase();
+          const list = q
+            ? RAW_LEGACY_SONGS.filter((s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || s.id.toLowerCase().includes(q))
+            : RAW_LEGACY_SONGS;
+          const overriddenCount = Object.keys(legacyOverrides).length;
+          const hiddenCount = Object.values(legacyOverrides).filter((o) => o.hidden).length;
+          return (
+            <>
+              <div className="rounded-3xl border border-hairline p-5 sm:p-6 bg-card space-y-2">
+                <p className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted flex items-center gap-2">
+                  <Archive className="h-3.5 w-3.5" /> Stare utwory z pliku ({RAW_LEGACY_SONGS.length})
+                </p>
+                <p className="text-sm text-ink-muted">
+                  Możesz ustawić <strong>offset startu sample'a</strong> (sekundy lub <code>mm:ss</code>) i ukryć utwór z gry.
+                  {" "}Aktualnie: <strong>{overriddenCount}</strong> z offsetem/ukrytych, w tym <strong>{hiddenCount}</strong> ukrytych.
+                </p>
+                <div className="relative">
+                  <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
+                  <input
+                    value={legacySearch}
+                    onChange={(e) => setLegacySearch(e.target.value)}
+                    placeholder="Szukaj po tytule, artyście lub ID…"
+                    className="w-full h-11 pl-10 pr-3 rounded-xl border border-hairline bg-paper outline-none focus:border-primary text-sm"
+                  />
+                </div>
+              </div>
+
+              <section className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-xl">{list.length} {list.length === 1 ? "utwór" : "utworów"}</h2>
+                  <button onClick={refresh} className="text-xs text-ink-muted hover:text-ink underline underline-offset-4">Odśwież</button>
+                </div>
+                <ul className="space-y-2">
+                  {list.map((s) => {
+                    const ovr = legacyOverrides[s.id];
+                    const edit = legacyEdits[s.id] ?? { startSec: "", hidden: false };
+                    const dirty =
+                      parseStart(edit.startSec) !== (ovr?.start_sec ?? 0) ||
+                      edit.hidden !== (ovr?.hidden ?? false);
+                    const isOverridden = !!ovr && (ovr.start_sec > 0 || ovr.hidden);
+                    return (
+                      <li key={s.id} className={`rounded-2xl border p-3 bg-paper ${ovr?.hidden ? "border-hairline/40 opacity-60" : isOverridden ? "border-primary/40" : "border-hairline"}`}>
+                        <div className="grid grid-cols-1 md:grid-cols-[1fr_120px_140px_auto] gap-2 items-center">
+                          <div className="min-w-0">
+                            <div className="font-medium truncate flex items-center gap-2">
+                              {s.title}
+                              {ovr?.hidden && <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-ink/10 text-ink-muted">Ukryty</span>}
+                              {isOverridden && !ovr?.hidden && <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/20 text-primary">+{ovr!.start_sec}s</span>}
+                            </div>
+                            <div className="text-sm text-ink-muted truncate">{s.artist}</div>
+                            <div className="text-[10px] font-mono text-ink-muted/70 truncate">{s.id}</div>
+                          </div>
+                          <input
+                            value={edit.startSec}
+                            onChange={(e) => setLegacyEdit(s.id, { startSec: e.target.value })}
+                            placeholder="0:08"
+                            title="Offset (sek lub mm:ss)"
+                            className="h-10 px-2 rounded-lg border border-hairline bg-card outline-none focus:border-primary text-sm font-mono text-center"
+                          />
+                          <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none px-2">
+                            <input
+                              type="checkbox"
+                              checked={edit.hidden}
+                              onChange={(e) => setLegacyEdit(s.id, { hidden: e.target.checked })}
+                              className="h-4 w-4 accent-primary"
+                            />
+                            <span>Ukryj z gry</span>
+                          </label>
+                          <div className="flex gap-1.5 justify-end">
+                            {isOverridden && (
+                              <button
+                                onClick={() => onResetLegacy(s.id)}
+                                disabled={legacySavingId === s.id}
+                                className="h-9 px-3 rounded-full border border-hairline text-xs hover:bg-muted disabled:opacity-40"
+                                title="Usuń override"
+                              >Reset</button>
+                            )}
+                            <button
+                              onClick={() => onSaveLegacy(s.id)}
+                              disabled={!dirty || legacySavingId === s.id}
+                              className="h-9 px-4 rounded-full bg-ink text-paper text-xs font-medium hover:opacity-90 disabled:opacity-40"
+                            >
+                              {legacySavingId === s.id ? "…" : "Zapisz"}
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                  {list.length === 0 && (
+                    <li className="rounded-2xl border border-hairline px-4 py-8 text-center text-sm text-ink-muted">Nic nie znaleziono.</li>
+                  )}
+                </ul>
+              </section>
+            </>
+          );
+        })()}
       </main>
     </div>
   );
