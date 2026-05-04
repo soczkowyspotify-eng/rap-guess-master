@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
-import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement } from "@/server/admin.functions";
+import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement, deleteSuggestion } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
-import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff } from "lucide-react";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
@@ -44,8 +44,11 @@ interface AlbumRow {
 interface AnnouncementRow {
   id: string; title: string; body: string; image_url: string | null; active: boolean; created_at: string;
 }
+interface SuggestionRow {
+  id: string; artist: string; title: string; link: string | null; created_at: string;
+}
 
-type Tab = "tracks" | "albums" | "announcements";
+type Tab = "tracks" | "albums" | "announcements" | "suggestions";
 
 function AdminPage() {
   const [pw, setPw] = useState("");
@@ -61,6 +64,7 @@ function AdminPage() {
   const addAnn = useServerFn(addAnnouncement);
   const delAnn = useServerFn(deleteAnnouncement);
   const togAnn = useServerFn(toggleAnnouncement);
+  const delSug = useServerFn(deleteSuggestion);
 
   const [tab, setTab] = useState<Tab>("tracks");
 
@@ -73,6 +77,7 @@ function AdminPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [albumRows, setAlbumRows] = useState<AlbumRow[]>([]);
   const [annRows, setAnnRows] = useState<AnnouncementRow[]>([]);
+  const [sugRows, setSugRows] = useState<SuggestionRow[]>([]);
 
   // Announcement form
   const [annTitle, setAnnTitle] = useState("");
@@ -119,6 +124,11 @@ function AdminPage() {
       .select("id, title, body, image_url, active, created_at")
       .order("created_at", { ascending: false });
     setAnnRows((ann ?? []) as AnnouncementRow[]);
+    const { data: sug } = await (supabase as any)
+      .from("track_suggestions")
+      .select("id, artist, title, link, created_at")
+      .order("created_at", { ascending: false });
+    setSugRows((sug ?? []) as SuggestionRow[]);
   };
 
   useEffect(() => { if (authed) refresh(); }, [authed]);
@@ -302,6 +312,15 @@ function AdminPage() {
     try {
       await togAnn({ data: { password: pw, id, active } });
       await refresh();
+    } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
+  };
+
+  const onDeleteSuggestion = async (id: string) => {
+    if (!confirm("Usunąć tę propozycję?")) return;
+    try {
+      await delSug({ data: { password: pw, id } });
+      await refresh();
+      toast.success("Usunięto");
     } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
   };
 
