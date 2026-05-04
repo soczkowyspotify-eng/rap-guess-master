@@ -33,11 +33,32 @@ const K = {
   album: "rg2-album-progress",
   settings: "rg2-settings",
   achievements: "rg2-achievements",
+  versusStats: "rg2-versus-stats",
 };
 
 const VERSUS_K = {
   playerId: "rg.playerId",
   nick: "rg.versusNick",
+};
+
+export interface VersusStats {
+  wins: number;
+  losses: number;
+  draws: number;
+  matchesPlayed: number;
+  roundsWon: number;
+  roundsLost: number;
+  vsBotWins: number;
+  vsBotHardWins: number;
+  bestStreak: number;
+  currentStreak: number;
+}
+
+export const EMPTY_VERSUS_STATS: VersusStats = {
+  wins: 0, losses: 0, draws: 0, matchesPlayed: 0,
+  roundsWon: 0, roundsLost: 0,
+  vsBotWins: 0, vsBotHardWins: 0,
+  bestStreak: 0, currentStreak: 0,
 };
 
 function uuid(): string {
@@ -107,6 +128,9 @@ export const Storage = {
     write(K.achievements, list);
     return true;
   },
+
+  getVersusStats: (): VersusStats => read(K.versusStats, EMPTY_VERSUS_STATS),
+  saveVersusStats: (s: VersusStats) => write(K.versusStats, s),
 
   resetAll: () => {
     if (!isClient()) return;

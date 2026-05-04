@@ -14,4 +14,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "album_complete", title: "Pełna płyta", description: "Ukończ album w 100%" },
   { id: "hard_win", title: "Hardcore", description: "Wygraj na poziomie Hard" },
   { id: "perfect_album", title: "Bez pomyłki", description: "Ukończ album bez ani jednego pudła" },
+  { id: "versus_first_win", title: "Pierwsza wygrana 1v1", description: "Wygraj pierwszy mecz Versus" },
+  { id: "versus_flawless", title: "Bez straty seta", description: "Wygraj mecz 3:0" },
+  { id: "versus_bot_hard", title: "Pogromca bota", description: "Pokonaj bota na trudnym" },
+  { id: "versus_5_wins", title: "Weteran areny", description: "Wygraj 5 meczów Versus" },
 ];
