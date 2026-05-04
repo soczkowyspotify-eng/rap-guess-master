@@ -5,8 +5,9 @@ import { AppHeader } from "@/components/app-header";
 import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement, deleteSuggestion } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
-import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink } from "lucide-react";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink, Youtube, Search, Play } from "lucide-react";
 import { toast } from "sonner";
+import { fetchFromYoutube, type YtFetchedTrack } from "@/server/youtube.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [
@@ -48,7 +49,7 @@ interface SuggestionRow {
   id: string; artist: string; title: string; link: string | null; created_at: string;
 }
 
-type Tab = "tracks" | "albums" | "announcements" | "suggestions";
+type Tab = "tracks" | "albums" | "announcements" | "suggestions" | "ytimport";
 
 function AdminPage() {
   const [pw, setPw] = useState("");
@@ -65,6 +66,7 @@ function AdminPage() {
   const delAnn = useServerFn(deleteAnnouncement);
   const togAnn = useServerFn(toggleAnnouncement);
   const delSug = useServerFn(deleteSuggestion);
+  const ytFetch = useServerFn(fetchFromYoutube);
 
   const [tab, setTab] = useState<Tab>("tracks");
 
@@ -78,6 +80,16 @@ function AdminPage() {
   const [albumRows, setAlbumRows] = useState<AlbumRow[]>([]);
   const [annRows, setAnnRows] = useState<AnnouncementRow[]>([]);
   const [sugRows, setSugRows] = useState<SuggestionRow[]>([]);
+
+  // ===== YT Import state =====
+  type ImportRow = YtFetchedTrack & { include: boolean; startSec: string };
+  const [ytLink, setYtLink] = useState("");
+  const [ytFetching, setYtFetching] = useState(false);
+  const [ytKind, setYtKind] = useState<"video" | "playlist" | null>(null);
+  const [ytRows, setYtRows] = useState<ImportRow[]>([]);
+  const [ytAlbum, setYtAlbum] = useState<{ title: string; artist: string; cover_url: string; year: string; recommended: boolean }>({ title: "", artist: "", cover_url: "", year: "", recommended: false });
+  const [ytPreview, setYtPreview] = useState<string | null>(null); // video_id
+  const [ytSaving, setYtSaving] = useState(false);
 
   // Announcement form
   const [annTitle, setAnnTitle] = useState("");
