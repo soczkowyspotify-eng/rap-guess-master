@@ -52,7 +52,6 @@ export function GameBoard({ game, cover, hideAnswerOnLoss = false }: Props) {
 
         <div className="flex justify-center pt-2">
           <button
-            onClick={() => playing ? player.stop() : player.play()}
             onClick={() => {
               if (playing) player.stop();
               else if (ended) player.playFull();
