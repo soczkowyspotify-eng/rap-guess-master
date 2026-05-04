@@ -63,7 +63,7 @@ export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, tr
         </button>
 
         <div className="flex flex-col items-center text-center gap-4">
-          <Vinyl spinning={false} cover={track?.cover} size={128} />
+          <Vinyl spinning={false} cover={(track as any)?.cover} size={128} />
           <div>
             <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-ink-muted">Wynik daily · #{number}</p>
             <h2 className="font-display text-3xl mt-1.5 leading-tight">
