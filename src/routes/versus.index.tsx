@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Swords, Plus, LogIn, Bot } from "lucide-react";
+import { Swords, Plus, LogIn, Bot, Zap, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { NickInput } from "@/components/versus/nick-input";
 import { createMatch } from "@/server/versus.functions";
 import { VersusLocal } from "@/lib/storage";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/versus/")({
   head: () => ({
@@ -26,6 +27,7 @@ function VersusHomePage() {
   const [nick, setNick] = useState("");
   const [joinId, setJoinId] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"classic" | "blitz">("classic");
 
   useEffect(() => {
     setNick(VersusLocal.getSuggestedNick());
@@ -38,7 +40,7 @@ function VersusHomePage() {
     try {
       const playerId = VersusLocal.getOrCreatePlayerId();
       VersusLocal.saveSuggestedNick(v);
-      const r = await createFn({ data: { playerId, nick: v } });
+      const r = await createFn({ data: { playerId, nick: v, mode } });
       navigate({ to: "/versus/$matchId", params: { matchId: r.id } });
     } catch (e: any) {
       toast.error(e?.message ?? "Nie udało się");
@@ -67,6 +69,40 @@ function VersusHomePage() {
           <div className="space-y-2">
             <label className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">Twój nick</label>
             <NickInput value={nick} onChange={setNick} />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-mono uppercase tracking-[0.2em] text-ink-muted">Tryb meczu</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMode("classic")}
+                className={cn(
+                  "rounded-2xl border p-3 text-left transition-all",
+                  mode === "classic" ? "border-primary bg-primary/5 shadow-lift" : "border-hairline hover:border-ink-muted",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-primary" />
+                  <span className="font-display text-base">Klasyczny</span>
+                </div>
+                <div className="text-[11px] text-ink-muted mt-1">Best of 5 + dogrywka do 8</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("blitz")}
+                className={cn(
+                  "rounded-2xl border p-3 text-left transition-all",
+                  mode === "blitz" ? "border-primary bg-primary/5 shadow-lift" : "border-hairline hover:border-ink-muted",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  <span className="font-display text-base">Blitz</span>
+                </div>
+                <div className="text-[11px] text-ink-muted mt-1">5 rund · 10 s na odpowiedź</div>
+              </button>
+            </div>
           </div>
 
           <Button onClick={create} disabled={busy} className="w-full rounded-full h-12">
