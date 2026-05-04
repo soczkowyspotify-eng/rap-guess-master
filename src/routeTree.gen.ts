@@ -18,6 +18,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VersusIndexRouteImport } from './routes/versus.index'
 import { Route as AlbumsIndexRouteImport } from './routes/albums.index'
+import { Route as VersusBotRouteImport } from './routes/versus.bot'
 import { Route as VersusMatchIdRouteImport } from './routes/versus.$matchId'
 import { Route as AlbumsAlbumIdRouteImport } from './routes/albums.$albumId'
 
@@ -66,6 +67,11 @@ const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
   path: '/albums/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VersusBotRoute = VersusBotRouteImport.update({
+  id: '/versus/bot',
+  path: '/versus/bot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VersusMatchIdRoute = VersusMatchIdRouteImport.update({
   id: '/versus/$matchId',
   path: '/versus/$matchId',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/versus/$matchId': typeof VersusMatchIdRoute
+  '/versus/bot': typeof VersusBotRoute
   '/albums/': typeof AlbumsIndexRoute
   '/versus/': typeof VersusIndexRoute
 }
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/versus/$matchId': typeof VersusMatchIdRoute
+  '/versus/bot': typeof VersusBotRoute
   '/albums': typeof AlbumsIndexRoute
   '/versus': typeof VersusIndexRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
   '/versus/$matchId': typeof VersusMatchIdRoute
+  '/versus/bot': typeof VersusBotRoute
   '/albums/': typeof AlbumsIndexRoute
   '/versus/': typeof VersusIndexRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/suggest'
     | '/albums/$albumId'
     | '/versus/$matchId'
+    | '/versus/bot'
     | '/albums/'
     | '/versus/'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/suggest'
     | '/albums/$albumId'
     | '/versus/$matchId'
+    | '/versus/bot'
     | '/albums'
     | '/versus'
   id:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/suggest'
     | '/albums/$albumId'
     | '/versus/$matchId'
+    | '/versus/bot'
     | '/albums/'
     | '/versus/'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   SuggestRoute: typeof SuggestRoute
   AlbumsAlbumIdRoute: typeof AlbumsAlbumIdRoute
   VersusMatchIdRoute: typeof VersusMatchIdRoute
+  VersusBotRoute: typeof VersusBotRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
   VersusIndexRoute: typeof VersusIndexRoute
 }
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AlbumsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/versus/bot': {
+      id: '/versus/bot'
+      path: '/versus/bot'
+      fullPath: '/versus/bot'
+      preLoaderRoute: typeof VersusBotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/versus/$matchId': {
       id: '/versus/$matchId'
       path: '/versus/$matchId'
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   SuggestRoute: SuggestRoute,
   AlbumsAlbumIdRoute: AlbumsAlbumIdRoute,
   VersusMatchIdRoute: VersusMatchIdRoute,
+  VersusBotRoute: VersusBotRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
   VersusIndexRoute: VersusIndexRoute,
 }
