@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/app-header";
-import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement } from "@/server/admin.functions";
+import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, deleteYtAlbum, updateYtAlbum, addAnnouncement, deleteAnnouncement, toggleAnnouncement, deleteSuggestion } from "@/server/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { loadYtTracks, loadYtAlbums } from "@/lib/yt-pool";
-import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff } from "lucide-react";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
@@ -44,8 +44,11 @@ interface AlbumRow {
 interface AnnouncementRow {
   id: string; title: string; body: string; image_url: string | null; active: boolean; created_at: string;
 }
+interface SuggestionRow {
+  id: string; artist: string; title: string; link: string | null; created_at: string;
+}
 
-type Tab = "tracks" | "albums" | "announcements";
+type Tab = "tracks" | "albums" | "announcements" | "suggestions";
 
 function AdminPage() {
   const [pw, setPw] = useState("");
@@ -61,6 +64,7 @@ function AdminPage() {
   const addAnn = useServerFn(addAnnouncement);
   const delAnn = useServerFn(deleteAnnouncement);
   const togAnn = useServerFn(toggleAnnouncement);
+  const delSug = useServerFn(deleteSuggestion);
 
   const [tab, setTab] = useState<Tab>("tracks");
 
@@ -73,6 +77,7 @@ function AdminPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [albumRows, setAlbumRows] = useState<AlbumRow[]>([]);
   const [annRows, setAnnRows] = useState<AnnouncementRow[]>([]);
+  const [sugRows, setSugRows] = useState<SuggestionRow[]>([]);
 
   // Announcement form
   const [annTitle, setAnnTitle] = useState("");
@@ -119,6 +124,11 @@ function AdminPage() {
       .select("id, title, body, image_url, active, created_at")
       .order("created_at", { ascending: false });
     setAnnRows((ann ?? []) as AnnouncementRow[]);
+    const { data: sug } = await (supabase as any)
+      .from("track_suggestions")
+      .select("id, artist, title, link, created_at")
+      .order("created_at", { ascending: false });
+    setSugRows((sug ?? []) as SuggestionRow[]);
   };
 
   useEffect(() => { if (authed) refresh(); }, [authed]);
@@ -305,6 +315,15 @@ function AdminPage() {
     } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
   };
 
+  const onDeleteSuggestion = async (id: string) => {
+    if (!confirm("Usunąć tę propozycję?")) return;
+    try {
+      await delSug({ data: { password: pw, id } });
+      await refresh();
+      toast.success("Usunięto");
+    } catch (err: any) { toast.error(err?.message ?? "Błąd"); }
+  };
+
   if (!authed) {
     return (
       <div className="min-h-screen bg-paper">
@@ -361,6 +380,10 @@ function AdminPage() {
               onClick={() => setTab("announcements")}
               className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "announcements" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
             ><Megaphone className="h-4 w-4" /> Popup</button>
+            <button
+              onClick={() => setTab("suggestions")}
+              className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "suggestions" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
+            ><Lightbulb className="h-4 w-4" /> Propozycje{sugRows.length > 0 && <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] rounded-full bg-primary text-paper">{sugRows.length}</span>}</button>
           </div>
         </div>
 
@@ -604,6 +627,37 @@ function AdminPage() {
                     {a.active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                   <button onClick={() => onDeleteAnnouncement(a.id)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted transition" aria-label="Usuń">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>)}
+
+        {tab === "suggestions" && (<>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl">{sugRows.length} {sugRows.length === 1 ? "propozycja" : "propozycji"} od userów</h2>
+              <button onClick={refresh} className="text-xs text-ink-muted hover:text-ink underline underline-offset-4">Odśwież</button>
+            </div>
+            <ul className="space-y-2">
+              {sugRows.length === 0 && (
+                <li className="rounded-2xl border border-hairline px-4 py-8 text-center text-sm text-ink-muted">Brak propozycji.</li>
+              )}
+              {sugRows.map((s) => (
+                <li key={s.id} className="rounded-2xl border border-hairline p-4 bg-paper flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate">{s.title}</div>
+                    <div className="text-sm text-ink-muted truncate">{s.artist}</div>
+                    <div className="text-[11px] font-mono text-ink-muted mt-1">{new Date(s.created_at).toLocaleString("pl-PL")}</div>
+                  </div>
+                  {s.link && (
+                    <a href={s.link} target="_blank" rel="noreferrer" className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-muted transition" aria-label="Otwórz link">
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                  <button onClick={() => onDeleteSuggestion(s.id)} className="h-9 w-9 rounded-full inline-flex items-center justify-center text-ink-muted hover:text-primary hover:bg-muted transition" aria-label="Usuń">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </li>
