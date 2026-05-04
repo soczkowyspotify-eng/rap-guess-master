@@ -100,6 +100,9 @@ export type Database = {
           host_player_id: string
           host_score: number
           id: string
+          mode: string
+          rematch_match_id: string | null
+          rematch_requested_by: string | null
           status: string
           track_ids: string[]
           updated_at: string
@@ -114,6 +117,9 @@ export type Database = {
           host_player_id: string
           host_score?: number
           id?: string
+          mode?: string
+          rematch_match_id?: string | null
+          rematch_requested_by?: string | null
           status?: string
           track_ids?: string[]
           updated_at?: string
@@ -128,6 +134,9 @@ export type Database = {
           host_player_id?: string
           host_score?: number
           id?: string
+          mode?: string
+          rematch_match_id?: string | null
+          rematch_requested_by?: string | null
           status?: string
           track_ids?: string[]
           updated_at?: string
