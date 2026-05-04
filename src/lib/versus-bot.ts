@@ -17,9 +17,9 @@ export interface BotProfile {
 }
 
 export const BOT_PROFILES: Record<BotDifficulty, BotProfile> = {
-  easy:   { id: "easy",   name: "Beat Rookie",   emoji: "🎧", description: "Świeżak. Słucha całych sampli." },
-  normal: { id: "normal", name: "Mixtape Mike",  emoji: "🎤", description: "Solidny gracz. Średnio 3 próby." },
-  hard:   { id: "hard",   name: "DJ Diamond",    emoji: "💎", description: "Pamięta wszystko. Bywa, że trafi z pół sekundy." },
+  easy:   { id: "easy",   name: "Mata",        emoji: "🎧", description: "Świeży gracz w grze. Czasem trafi, czasem nie." },
+  normal: { id: "normal", name: "Białas",      emoji: "🎤", description: "Siedzi w rapie od kilku lat. Solidny przeciwnik." },
+  hard:   { id: "hard",   name: "Peja",        emoji: "💎", description: "Legenda z 20-letnim stażem. Rozpoznaje bit z pół sekundy." },
 };
 
 interface BotPlan {
@@ -52,16 +52,16 @@ export function planBotRound(maxAttempts: number, difficulty: BotDifficulty): Bo
 
   switch (difficulty) {
     case "easy":
-      weights = [1, 2, 4, 6, 5, 3]; // szczyt ~próba 4
-      missChance = 0.30;
+      weights = [1, 2, 3, 5, 6, 4]; // szczyt ~próba 5
+      missChance = 0.40;
       break;
     case "normal":
-      weights = [3, 5, 6, 4, 2, 1]; // szczyt ~próba 3
-      missChance = 0.15;
+      weights = [2, 4, 6, 5, 3, 1]; // szczyt ~próba 3
+      missChance = 0.22;
       break;
     case "hard":
-      weights = [8, 6, 3, 2, 1, 1]; // bardzo wczesne trafienia
-      missChance = 0.05;
+      weights = [14, 8, 3, 1, 1, 1]; // niemal zawsze 1-2 próba
+      missChance = 0.07;
       break;
   }
 
