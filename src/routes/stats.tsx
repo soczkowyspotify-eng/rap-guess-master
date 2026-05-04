@@ -3,7 +3,7 @@ import { AppHeader } from "@/components/app-header";
 import { Storage } from "@/lib/storage";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { allSongs, dailyKey } from "@/lib/game-data";
-import { Check, Lock } from "lucide-react";
+import { Check, Lock, Swords } from "lucide-react";
 import { useI18n } from "@/i18n/i18n";
 
 export const Route = createFileRoute("/stats")({
@@ -29,6 +29,8 @@ function StatsPage() {
   const all = allSongs();
   const winRate = stats.totalPlayed ? Math.round((stats.totalGuessed / stats.totalPlayed) * 100) : 0;
   const avgAttempts = stats.totalGuessed ? (stats.totalAttempts / stats.totalGuessed).toFixed(1) : "—";
+  const versus = Storage.getVersusStats();
+  const versusWinRate = versus.matchesPlayed ? Math.round((versus.wins / versus.matchesPlayed) * 100) : 0;
 
   const days = lastNDays(91);
   const todayKey = dailyKey();
@@ -62,6 +64,28 @@ function StatsPage() {
               <div className="font-display text-4xl mt-2">{s.v}</div>
             </div>
           ))}
+        </section>
+
+        <section>
+          <div className="flex items-center gap-3 mb-5">
+            <Swords className="h-5 w-5 text-primary" />
+            <h2 className="font-display text-2xl">Versus 1v1</h2>
+            {versus.currentStreak >= 2 && (
+              <span className="text-xs font-mono uppercase tracking-wider px-2 py-1 rounded-full bg-success/15 text-success">
+                seria {versus.currentStreak}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <VersusStat label="Mecze" value={versus.matchesPlayed} />
+            <VersusStat label="Wygrane" value={versus.wins} accent="success" />
+            <VersusStat label="Win rate" value={`${versusWinRate}%`} />
+            <VersusStat label="Najlepsza seria" value={versus.bestStreak} />
+            <VersusStat label="Porażki" value={versus.losses} />
+            <VersusStat label="Remisy" value={versus.draws} />
+            <VersusStat label="Wygrane vs Bot" value={versus.vsBotWins} />
+            <VersusStat label="Bot Hard" value={versus.vsBotHardWins} accent="primary" />
+          </div>
         </section>
 
         <section>
@@ -124,6 +148,16 @@ function StatsPage() {
           </div>
         </section>
       </main>
+    </div>
+  );
+}
+
+function VersusStat({ label, value, accent }: { label: string; value: string | number; accent?: "success" | "primary" }) {
+  const valueClass = accent === "success" ? "text-success" : accent === "primary" ? "text-primary" : "";
+  return (
+    <div className="bg-card border border-hairline rounded-2xl p-5">
+      <div className="text-xs font-mono uppercase tracking-wider text-ink-muted">{label}</div>
+      <div className={`font-display text-3xl mt-2 ${valueClass}`}>{value}</div>
     </div>
   );
 }
