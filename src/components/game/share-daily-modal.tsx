@@ -11,9 +11,11 @@ interface Props {
   maxAttempts: number;
   onClose: () => void;
   track?: Song | null;
+  /** Tryb "tylko podgląd" — np. gdy ktoś wszedł z linku /share */
+  readOnly?: boolean;
 }
 
-export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, track }: Props) {
+export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, track, readOnly = false }: Props) {
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -27,8 +29,25 @@ export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, tr
     return "🟥";
   }).join("");
 
-  const url = typeof window !== "undefined" ? `${window.location.origin}/daily` : "https://rapguesser.pl/daily";
   const attempts = guesses.length;
+  const squaresPlain = Array.from({ length: maxAttempts }, (_, i) => {
+    const g = guesses[i];
+    if (!g) return "";
+    if (g.correct) return "🟢";
+    if (g.skipped) return "⏭";
+    return "🟥";
+  }).join("");
+  // Link, który po otwarciu pokaże TEN SAM popup u znajomego (z OG preview na messengerach)
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://rapguesser.pl";
+  const params = new URLSearchParams({
+    n: String(number),
+    w: won ? "1" : "0",
+    g: String(attempts),
+    m: String(maxAttempts),
+    s: squaresPlain,
+  });
+  if (track) { params.set("t", track.title); params.set("a", track.artist); }
+  const url = `${origin}/share?${params.toString()}`;
   const songLabel = track ? `${track.artist} — ${track.title}` : "dzisiejszy utwór";
   const headline = won
     ? `🎧 RAP GUESSER #${number} — zgadłem ${songLabel} w ${attempts} ${attemptsWord(attempts)}. Spróbujesz?`
@@ -74,17 +93,20 @@ export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, tr
   };
 
   useEffect(() => {
+    if (readOnly) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, readOnly]);
 
   return (
-    <div className="fixed inset-0 bg-ink/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 bg-ink/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto" onClick={readOnly ? undefined : onClose}>
       <div className="relative max-w-md w-full animate-scale-in" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute -top-3 -right-3 z-10 w-9 h-9 rounded-full bg-card border border-hairline flex items-center justify-center text-ink-muted hover:text-ink shadow-lift transition-colors">
-          <X className="h-4 w-4" />
-        </button>
+        {!readOnly && (
+          <button onClick={onClose} className="absolute -top-3 -right-3 z-10 w-9 h-9 rounded-full bg-card border border-hairline flex items-center justify-center text-ink-muted hover:text-ink shadow-lift transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        )}
 
         {/* Karta do udostępnienia — eksportowana jako PNG */}
         <div
@@ -142,6 +164,22 @@ export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, tr
           </div>
         </div>
 
+        {readOnly ? (
+          <div className="mt-4 flex flex-col gap-2 bg-card border border-hairline rounded-2xl p-3 shadow-lift">
+            <a
+              href="/daily"
+              className="h-11 rounded-full bg-ink text-paper text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 active:scale-[.98] transition"
+            >
+              Zagraj dzisiejsze Daily
+            </a>
+            <a
+              href="/"
+              className="h-10 rounded-full border border-hairline text-xs font-medium flex items-center justify-center gap-2 hover:bg-muted transition"
+            >
+              Strona główna
+            </a>
+          </div>
+        ) : (
         <div className="mt-4 flex flex-col gap-2 bg-card border border-hairline rounded-2xl p-3 shadow-lift">
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -173,6 +211,7 @@ export function ShareDailyModal({ number, won, guesses, maxAttempts, onClose, tr
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
