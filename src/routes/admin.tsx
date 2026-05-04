@@ -380,6 +380,10 @@ function AdminPage() {
               onClick={() => setTab("announcements")}
               className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "announcements" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
             ><Megaphone className="h-4 w-4" /> Popup</button>
+            <button
+              onClick={() => setTab("suggestions")}
+              className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "suggestions" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
+            ><Lightbulb className="h-4 w-4" /> Propozycje{sugRows.length > 0 && <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] rounded-full bg-primary text-paper">{sugRows.length}</span>}</button>
           </div>
         </div>
 
