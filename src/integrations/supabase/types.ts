@@ -89,6 +89,96 @@ export type Database = {
         }
         Relationships: []
       }
+      versus_matches: {
+        Row: {
+          created_at: string
+          current_round: number
+          guest_nick: string | null
+          guest_player_id: string | null
+          guest_score: number
+          host_nick: string
+          host_player_id: string
+          host_score: number
+          id: string
+          status: string
+          track_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_round?: number
+          guest_nick?: string | null
+          guest_player_id?: string | null
+          guest_score?: number
+          host_nick: string
+          host_player_id: string
+          host_score?: number
+          id?: string
+          status?: string
+          track_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_round?: number
+          guest_nick?: string | null
+          guest_player_id?: string | null
+          guest_score?: number
+          host_nick?: string
+          host_player_id?: string
+          host_score?: number
+          id?: string
+          status?: string
+          track_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      versus_round_results: {
+        Row: {
+          attempts_used: number
+          correct: boolean
+          finished_at: string
+          id: string
+          match_id: string
+          player_id: string
+          round_idx: number
+        }
+        Insert: {
+          attempts_used: number
+          correct: boolean
+          finished_at?: string
+          id?: string
+          match_id: string
+          player_id: string
+          round_idx: number
+        }
+        Update: {
+          attempts_used?: number
+          correct?: boolean
+          finished_at?: string
+          id?: string
+          match_id?: string
+          player_id?: string
+          round_idx?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "versus_round_results_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "versus_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "versus_round_results_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "versus_matches_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       yt_album_tracks: {
         Row: {
           album_id: string
@@ -186,7 +276,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      versus_matches_public: {
+        Row: {
+          created_at: string | null
+          current_round: number | null
+          guest_nick: string | null
+          guest_player_id: string | null
+          guest_score: number | null
+          host_nick: string | null
+          host_player_id: string | null
+          host_score: number | null
+          id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_round?: number | null
+          guest_nick?: string | null
+          guest_player_id?: string | null
+          guest_score?: number | null
+          host_nick?: string | null
+          host_player_id?: string | null
+          host_score?: number | null
+          id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_round?: number | null
+          guest_nick?: string | null
+          guest_player_id?: string | null
+          guest_score?: number | null
+          host_nick?: string | null
+          host_player_id?: string | null
+          host_score?: number | null
+          id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
