@@ -35,6 +35,33 @@ const K = {
   achievements: "rg2-achievements",
 };
 
+const VERSUS_K = {
+  playerId: "rg.playerId",
+  nick: "rg.versusNick",
+};
+
+function uuid(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
+  return "p_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+export const VersusLocal = {
+  getOrCreatePlayerId(): string {
+    if (!isClient()) return "";
+    let id = localStorage.getItem(VERSUS_K.playerId);
+    if (!id) { id = uuid(); localStorage.setItem(VERSUS_K.playerId, id); }
+    return id;
+  },
+  getSuggestedNick(): string {
+    if (!isClient()) return "";
+    return localStorage.getItem(VERSUS_K.nick) ?? "";
+  },
+  saveSuggestedNick(nick: string) {
+    if (!isClient()) return;
+    try { localStorage.setItem(VERSUS_K.nick, nick); } catch {}
+  },
+};
+
 const isClient = () => typeof window !== "undefined";
 
 function read<T>(key: string, fallback: T): T {
