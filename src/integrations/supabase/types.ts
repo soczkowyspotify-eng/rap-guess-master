@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      legacy_song_overrides: {
+        Row: {
+          created_at: string
+          hidden: boolean
+          song_id: string
+          start_sec: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hidden?: boolean
+          song_id: string
+          start_sec?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hidden?: boolean
+          song_id?: string
+          start_sec?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       track_suggestions: {
         Row: {
           artist: string
