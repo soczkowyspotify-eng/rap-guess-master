@@ -13,14 +13,17 @@ import { Route as SuggestRouteImport } from './routes/suggest'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as ShareRouteImport } from './routes/share'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as LyricsRouteImport } from './routes/lyrics'
 import { Route as EndlessRouteImport } from './routes/endless'
 import { Route as DailyRouteImport } from './routes/daily'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VersusIndexRouteImport } from './routes/versus.index'
 import { Route as AlbumsIndexRouteImport } from './routes/albums.index'
 import { Route as VersusBotRouteImport } from './routes/versus.bot'
 import { Route as VersusMatchIdRouteImport } from './routes/versus.$matchId'
+import { Route as SettingsAlbumsRouteImport } from './routes/settings.albums'
 import { Route as AlbumsAlbumIdRouteImport } from './routes/albums.$albumId'
 
 const SuggestRoute = SuggestRouteImport.update({
@@ -43,6 +46,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LyricsRoute = LyricsRouteImport.update({
+  id: '/lyrics',
+  path: '/lyrics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EndlessRoute = EndlessRouteImport.update({
   id: '/endless',
   path: '/endless',
@@ -51,6 +59,11 @@ const EndlessRoute = EndlessRouteImport.update({
 const DailyRoute = DailyRouteImport.update({
   id: '/daily',
   path: '/daily',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -83,6 +96,11 @@ const VersusMatchIdRoute = VersusMatchIdRouteImport.update({
   path: '/versus/$matchId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsAlbumsRoute = SettingsAlbumsRouteImport.update({
+  id: '/albums',
+  path: '/albums',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const AlbumsAlbumIdRoute = AlbumsAlbumIdRouteImport.update({
   id: '/albums/$albumId',
   path: '/albums/$albumId',
@@ -92,13 +110,16 @@ const AlbumsAlbumIdRoute = AlbumsAlbumIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
-  '/settings': typeof SettingsRoute
+  '/lyrics': typeof LyricsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/share': typeof ShareRoute
   '/stats': typeof StatsRoute
   '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
+  '/settings/albums': typeof SettingsAlbumsRoute
   '/versus/$matchId': typeof VersusMatchIdRoute
   '/versus/bot': typeof VersusBotRoute
   '/albums/': typeof AlbumsIndexRoute
@@ -107,13 +128,16 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
-  '/settings': typeof SettingsRoute
+  '/lyrics': typeof LyricsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/share': typeof ShareRoute
   '/stats': typeof StatsRoute
   '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
+  '/settings/albums': typeof SettingsAlbumsRoute
   '/versus/$matchId': typeof VersusMatchIdRoute
   '/versus/bot': typeof VersusBotRoute
   '/albums': typeof AlbumsIndexRoute
@@ -123,13 +147,16 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/daily': typeof DailyRoute
   '/endless': typeof EndlessRoute
-  '/settings': typeof SettingsRoute
+  '/lyrics': typeof LyricsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/share': typeof ShareRoute
   '/stats': typeof StatsRoute
   '/suggest': typeof SuggestRoute
   '/albums/$albumId': typeof AlbumsAlbumIdRoute
+  '/settings/albums': typeof SettingsAlbumsRoute
   '/versus/$matchId': typeof VersusMatchIdRoute
   '/versus/bot': typeof VersusBotRoute
   '/albums/': typeof AlbumsIndexRoute
@@ -140,13 +167,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/auth'
     | '/daily'
     | '/endless'
+    | '/lyrics'
     | '/settings'
     | '/share'
     | '/stats'
     | '/suggest'
     | '/albums/$albumId'
+    | '/settings/albums'
     | '/versus/$matchId'
     | '/versus/bot'
     | '/albums/'
@@ -155,13 +185,16 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/auth'
     | '/daily'
     | '/endless'
+    | '/lyrics'
     | '/settings'
     | '/share'
     | '/stats'
     | '/suggest'
     | '/albums/$albumId'
+    | '/settings/albums'
     | '/versus/$matchId'
     | '/versus/bot'
     | '/albums'
@@ -170,13 +203,16 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/auth'
     | '/daily'
     | '/endless'
+    | '/lyrics'
     | '/settings'
     | '/share'
     | '/stats'
     | '/suggest'
     | '/albums/$albumId'
+    | '/settings/albums'
     | '/versus/$matchId'
     | '/versus/bot'
     | '/albums/'
@@ -186,9 +222,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AuthRoute: typeof AuthRoute
   DailyRoute: typeof DailyRoute
   EndlessRoute: typeof EndlessRoute
-  SettingsRoute: typeof SettingsRoute
+  LyricsRoute: typeof LyricsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   ShareRoute: typeof ShareRoute
   StatsRoute: typeof StatsRoute
   SuggestRoute: typeof SuggestRoute
@@ -229,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lyrics': {
+      id: '/lyrics'
+      path: '/lyrics'
+      fullPath: '/lyrics'
+      preLoaderRoute: typeof LyricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/endless': {
       id: '/endless'
       path: '/endless'
@@ -241,6 +286,13 @@ declare module '@tanstack/react-router' {
       path: '/daily'
       fullPath: '/daily'
       preLoaderRoute: typeof DailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -285,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VersusMatchIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/albums': {
+      id: '/settings/albums'
+      path: '/albums'
+      fullPath: '/settings/albums'
+      preLoaderRoute: typeof SettingsAlbumsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/albums/$albumId': {
       id: '/albums/$albumId'
       path: '/albums/$albumId'
@@ -295,12 +354,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SettingsRouteChildren {
+  SettingsAlbumsRoute: typeof SettingsAlbumsRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsAlbumsRoute: SettingsAlbumsRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AuthRoute: AuthRoute,
   DailyRoute: DailyRoute,
   EndlessRoute: EndlessRoute,
-  SettingsRoute: SettingsRoute,
+  LyricsRoute: LyricsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   ShareRoute: ShareRoute,
   StatsRoute: StatsRoute,
   SuggestRoute: SuggestRoute,

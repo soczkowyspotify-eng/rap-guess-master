@@ -301,3 +301,91 @@ export const resetLegacyOverride = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ============= Lyric snippets =============
+
+const LyricUpsertSchema = PwSchema.extend({
+  id: z.string().uuid().optional(),
+  track_id: z.string().min(1).max(200),
+  artist: z.string().min(1).max(200),
+  title: z.string().min(1).max(200),
+  lines: z.array(z.string().min(1).max(500)).min(1).max(8),
+  difficulty: z.enum(["easy", "normal", "hard"]).default("normal"),
+  active: z.boolean().default(true),
+});
+
+export const upsertLyricSnippet = createServerFn({ method: "POST" })
+  .inputValidator((d) => LyricUpsertSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const payload = {
+      track_id: data.track_id,
+      artist: data.artist.trim(),
+      title: data.title.trim(),
+      lines: data.lines.map(l => l.trim()).filter(Boolean),
+      difficulty: data.difficulty,
+      active: data.active,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.id) {
+      const { error } = await supabaseAdmin.from("lyric_snippets").update(payload).eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { ok: true, id: data.id };
+    }
+    const { data: row, error } = await supabaseAdmin
+      .from("lyric_snippets")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { ok: true, id: row.id };
+  });
+
+const LyricIdSchema = PwSchema.extend({ id: z.string().uuid() });
+
+export const deleteLyricSnippet = createServerFn({ method: "POST" })
+  .inputValidator((d) => LyricIdSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const { error } = await supabaseAdmin.from("lyric_snippets").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const LyricToggleSchema = PwSchema.extend({ id: z.string().uuid(), active: z.boolean() });
+
+export const toggleLyricSnippet = createServerFn({ method: "POST" })
+  .inputValidator((d) => LyricToggleSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const { error } = await supabaseAdmin.from("lyric_snippets").update({ active: data.active }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const LyricBulkSchema = PwSchema.extend({
+  items: z.array(z.object({
+    track_id: z.string().min(1).max(200),
+    artist: z.string().min(1).max(200),
+    title: z.string().min(1).max(200),
+    lines: z.array(z.string().min(1).max(500)).min(1).max(8),
+    difficulty: z.enum(["easy", "normal", "hard"]).default("normal"),
+  })).min(1).max(200),
+});
+
+export const bulkImportLyricSnippets = createServerFn({ method: "POST" })
+  .inputValidator((d) => LyricBulkSchema.parse(d))
+  .handler(async ({ data }) => {
+    checkPassword(data.password);
+    const rows = data.items.map(i => ({
+      track_id: i.track_id,
+      artist: i.artist.trim(),
+      title: i.title.trim(),
+      lines: i.lines.map(l => l.trim()).filter(Boolean),
+      difficulty: i.difficulty,
+      active: true,
+    }));
+    const { error, count } = await supabaseAdmin.from("lyric_snippets").insert(rows, { count: "exact" });
+    if (error) throw new Error(error.message);
+    return { ok: true, inserted: count ?? rows.length };
+  });

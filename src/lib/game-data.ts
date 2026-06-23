@@ -1,6 +1,7 @@
 import { SONGS, type Song } from "@/data/songs";
 import { ALBUMS, type Album } from "@/data/albums";
 import { getYtPool, getYtAlbums } from "./yt-pool";
+import { AlbumPrefs } from "./album-prefs";
 
 export type Difficulty = "easy" | "normal" | "hard";
 
@@ -13,18 +14,37 @@ export const DIFFICULTY: Record<Difficulty, { durations: number[]; attempts: num
 export type Mode = "daily" | "endless" | "album";
 
 export function allSongs(): Song[] {
-  // Pełna baza = songs.mjs + wszystkie tracki z albumów + YT tracki z Cloud
-  // Deduplikujemy najpierw po id, potem po (artysta+tytuł) — żeby ten sam utwór
-  // dodany w albumie i jako pojedynczy track nie pojawiał się dwa razy.
   const byId = new Map<string, Song>();
   const push = (s: Song) => { if (!byId.has(s.id)) byId.set(s.id, s); };
-  for (const s of SONGS) push(s);
-  // YT pojedyncze tracki priorytetowo nad albumowymi (jak były dodane jako single)
-  for (const s of getYtPool()) push(s);
-  for (const a of ALBUMS) for (const s of a.songs) push(s);
-  for (const a of getYtAlbums()) for (const s of a.songs) push(s);
 
-  return dedupeSongs(Array.from(byId.values()));
+  const enabled = AlbumPrefs.get();
+  const useFilter = enabled && enabled.size > 0;
+
+  // Singles zawsze wchodzą — to nie albumy
+  for (const s of SONGS) push(s);
+  for (const s of getYtPool()) push(s);
+
+  for (const a of ALBUMS) {
+    if (useFilter && !enabled.has(a.id)) continue;
+    for (const s of a.songs) push(s);
+  }
+  for (const a of getYtAlbums()) {
+    if (useFilter && !enabled.has(a.id)) continue;
+    for (const s of a.songs) push(s);
+  }
+
+  const result = dedupeSongs(Array.from(byId.values()));
+  // Fallback: gdy pula < 10, ignoruj filtr i wróć do pełnej
+  if (useFilter && result.length < 10) {
+    const fallback = new Map<string, Song>();
+    for (const s of SONGS) fallback.set(s.id, s);
+    for (const s of getYtPool()) fallback.set(s.id, s);
+    for (const a of ALBUMS) for (const s of a.songs) fallback.set(s.id, s);
+    for (const a of getYtAlbums()) for (const s of a.songs) fallback.set(s.id, s);
+    return dedupeSongs(Array.from(fallback.values()));
+  }
+
+  return result;
 }
 
 export function albums(): Album[] { return [...getYtAlbums(), ...ALBUMS]; }
