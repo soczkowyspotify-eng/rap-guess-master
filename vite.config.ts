@@ -17,4 +17,16 @@ export default defineConfig({
       },
     },
   },
+  tanstackStart: {
+    importProtection: {
+      behavior: "warn",
+      client: {
+        // Keep default *.server.* file block but drop the extra **/server/** rule
+        // — this project already has server-fn modules under src/server/ that the
+        // splitter handles correctly.
+        files: ["**/*.server.*"],
+        specifiers: ["server-only"],
+      },
+    },
+  },
 });
