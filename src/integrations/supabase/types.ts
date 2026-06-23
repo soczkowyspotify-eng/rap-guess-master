@@ -65,6 +65,90 @@ export type Database = {
         }
         Relationships: []
       }
+      lyric_snippets: {
+        Row: {
+          active: boolean
+          artist: string
+          created_at: string
+          created_by: string | null
+          difficulty: string
+          id: string
+          lines: string[]
+          title: string
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          artist: string
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          id?: string
+          lines: string[]
+          title: string
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          artist?: string
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          id?: string
+          lines?: string[]
+          title?: string
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      presence_pings: {
+        Row: {
+          current_view: string
+          last_seen: string
+          nick: string
+          player_id: string
+        }
+        Insert: {
+          current_view?: string
+          last_seen?: string
+          nick: string
+          player_id: string
+        }
+        Update: {
+          current_view?: string
+          last_seen?: string
+          nick?: string
+          player_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          nick: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          nick: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          nick?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       track_suggestions: {
         Row: {
           artist: string
@@ -86,6 +170,72 @@ export type Database = {
           id?: string
           link?: string | null
           title?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          enabled_album_ids: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          enabled_album_ids?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          enabled_album_ids?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          daily: Json
+          endless: Json
+          lyrics: Json
+          updated_at: string
+          user_id: string
+          versus: Json
+        }
+        Insert: {
+          daily?: Json
+          endless?: Json
+          lyrics?: Json
+          updated_at?: string
+          user_id: string
+          versus?: Json
+        }
+        Update: {
+          daily?: Json
+          endless?: Json
+          lyrics?: Json
+          updated_at?: string
+          user_id?: string
+          versus?: Json
         }
         Relationships: []
       }
@@ -281,10 +431,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -411,6 +567,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

@@ -6,9 +6,10 @@ import { addYtTrack, deleteYtTrack, updateYtTrack, verifyAdmin, addYtAlbum, dele
 import { supabase } from "@/integrations/supabase/client";
 import { loadYtTracks, loadYtAlbums, loadLegacyOverrides } from "@/lib/yt-pool";
 import { RAW_LEGACY_SONGS } from "@/data/songs";
-import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink, Youtube, Search, Play, Archive, EyeOff as EyeOffIcon } from "lucide-react";
+import { Trash2, Lock, Plus, Music, Disc3, X, Pencil, Megaphone, Eye, EyeOff, Lightbulb, ExternalLink, Youtube, Search, Play, Archive, EyeOff as EyeOffIcon, Quote } from "lucide-react";
 import { toast } from "sonner";
 import { fetchFromYoutube, type YtFetchedTrack } from "@/server/youtube.functions";
+import { LyricsAdminPanel } from "@/components/admin/lyrics-panel";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [
@@ -55,7 +56,7 @@ interface SuggestionRow {
   id: string; artist: string; title: string; link: string | null; created_at: string;
 }
 
-type Tab = "tracks" | "albums" | "announcements" | "suggestions" | "ytimport" | "legacy";
+type Tab = "tracks" | "albums" | "announcements" | "suggestions" | "ytimport" | "legacy" | "lyrics";
 
 function AdminPage() {
   const [pw, setPw] = useState("");
@@ -542,8 +543,14 @@ function AdminPage() {
               onClick={() => setTab("legacy")}
               className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "legacy" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
             ><Archive className="h-4 w-4" /> Legacy</button>
+            <button
+              onClick={() => setTab("lyrics")}
+              className={`px-5 h-10 rounded-full text-sm inline-flex items-center gap-2 transition ${tab === "lyrics" ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
+            ><Quote className="h-4 w-4" /> Wersy</button>
           </div>
         </div>
+
+        {tab === "lyrics" && <LyricsAdminPanel password={pw} />}
 
         {tab === "tracks" && (<>
         <form onSubmit={onAdd} className="rounded-3xl border border-hairline p-5 sm:p-6 space-y-3 bg-card">

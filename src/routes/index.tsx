@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Calendar, Infinity as Inf, Disc3, ArrowRight, Swords } from "lucide-react";
+import { Calendar, Infinity as Inf, Disc3, ArrowRight, Swords, Quote } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 import { Vinyl } from "@/components/game/vinyl";
 import { allSongs, albums } from "@/lib/game-data";
 import { motion } from "framer-motion";
 import { useI18n } from "@/i18n/i18n";
+import { Clock } from "@/components/clock";
+import { usePresence } from "@/hooks/use-presence";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/")({
 const MODES = [
   { to: "/daily", labelKey: "nav.daily", descKey: "home.mode.daily.desc", icon: Calendar },
   { to: "/endless", labelKey: "nav.endless", descKey: "home.mode.endless.desc", icon: Inf },
+  { to: "/lyrics", labelKey: "nav.lyrics", descKey: "home.mode.lyrics.desc", icon: Quote },
   { to: "/albums", labelKey: "nav.albums", descKey: "home.mode.albums.desc", icon: Disc3 },
   { to: "/versus", labelKey: "nav.versus", descKey: "home.mode.versus.desc", icon: Swords },
 ] as const;
@@ -27,6 +30,7 @@ function Index() {
   const { t } = useI18n();
   const total = allSongs().length;
   const albCount = albums().length;
+  usePresence("home");
   return (
     <div className="min-h-screen bg-paper">
       <AppHeader />
@@ -36,9 +40,9 @@ function Index() {
           <div>
             <motion.p
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted mb-6"
+              className="text-xs font-mono uppercase tracking-[0.3em] text-ink-muted mb-6 flex items-center gap-3 flex-wrap"
             >
-              {t("home.tag")}
+              {t("home.tag")} <span className="hidden sm:inline">·</span> <Clock />
             </motion.p>
             <motion.h1
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}

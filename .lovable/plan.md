@@ -1,135 +1,122 @@
-## Cel
+## Zakres
 
-Pięć powiązanych zmian:
-
-1. **Versus Blitz** — szybki wariant 1v1 (PvP i vs Bot)
-2. **Popup rewanżu** w PvP (przyjmij/odrzuć)
-3. **Aktualizacja popupu changelogu** o nowe rzeczy
-4. **Ładny share wyniku Daily** + drobny refresh tekstu
-5. **UI/UX polish + naprawa winylu w dark mode**
+Sześć powiązanych funkcji + lekkie odświeżenie UI. Wszystko działa bez logowania — konto jest opcjonalne.
 
 ---
 
-## 1. Versus Blitz
+### 1. Logowanie opcjonalne (Lovable Cloud Auth)
 
-Nowy wariant Versusa obok klasycznego (best of 5 + dogrywka).
+- E-mail/hasło + Google (przez brokera Lovable).
+- Nowa trasa `/auth` z popupem zachęcającym.
+- W nagłówku przycisk **Konto / Zaloguj** z inicjałem awatara.
+- Tabela `profiles` (nick, avatar). Po zalogowaniu nick z profilu wchodzi automatycznie do Versus.
+- Statystyki Daily/Endless/Versus z zalogowanym kontem synchronizują się do `user_stats` (scalanie z localStorage).
+- Gra bez konta działa tak jak teraz (localStorage).
 
-**Reguły:**
-- 5 rund (bez dogrywki — przy remisie po 5 rundach wynik = remis)
-- W każdej rundzie 5 prób, max długość sampla **10 s** (`durations: [1, 2, 4, 7, 10]`)
-- Po pierwszym kliknięciu Play w rundzie startuje **10-sekundowy licznik**
-- Po upływie 10 s runda automatycznie liczona jako przegrana (`correct=false`, użyte wszystkie próby)
-- Punktacja jak w klasyku: kto trafił z mniejszą liczbą prób bierze rundę
+### 2. Panel ogłoszeń / popup aktualizacji w adminie
 
-**UX:**
-- W lobby `/versus` (PvP) i `/versus/bot` dodaję wybór trybu: **Klasyczny** / **Blitz**
-- Pasek wyniku pokazuje pływający timer (kółko z odliczaniem) gdy uruchomiony
-- Po wyzerowaniu timera wynik leci do bazy (PvP) lub lokalnie (bot)
+- W `/admin` nowa sekcja **Ogłoszenia**:
+  - lista wpisów z `announcements`,
+  - dodaj/edytuj (tytuł, treść, obrazek URL, aktywne tak/nie),
+  - switch **Aktywne** wyłącza popup u wszystkich,
+  - przycisk **Pokaż ponownie wszystkim** (zmiana id resetuje localStorage „seen").
+- Popup `changelog-popup.tsx` honoruje flagę aktywne.
 
-**Backend (PvP):**
-- Migracja: `ALTER TABLE versus_matches ADD COLUMN mode text NOT NULL DEFAULT 'classic'`
-- `createMatch` przyjmuje `mode`, dla blitz losuje 5 tracków zamiast 8
-- `submitRoundResult` uwzględnia tryb: blitz = sztywno 5 rund, brak dogrywki, brak warunku „pierwszy do 3”
+### 3. Data i godzina na stronie
 
-**Frontend:**
-- `versus/round.tsx` (PvP) i `versus/bot-round.tsx` przyjmują `variant: "classic" | "blitz"` i konfigurację prób
-- Nowy komponent `versus/round-timer.tsx` — okrągłe odliczanie 10 s
-- `score-bar.tsx` ma slot na timer
+- Mały zegar w headerze (desktop) i na home: `pon, 12 maja · 14:32`, strefa `Europe/Warsaw`, odświeżany co minutę.
 
----
+### 4. System aktywnych graczy
 
-## 2. Popup rewanżu (PvP)
+- Tabela `presence_pings` (player_id, nick, current_view, last_seen).
+- Hook `usePresence()` co 30s woła server-fn `pingPresence`.
+- Server-fn `getActivePlayers()` zwraca licznik (last_seen > now - 2 min) + listę nicków.
+- Widget **🟢 X graczy online** na home + w lobby Versus.
 
-**Backend:**
-- Migracja: w `versus_matches` dodać:
-  - `rematch_requested_by text` (nullable)
-  - `rematch_match_id uuid` (nullable)
-- Nowe server functions:
-  - `requestRematch({matchId, playerId})` — ustawia `rematch_requested_by`
-  - `respondRematch({matchId, playerId, accept})` — jeśli akceptuje, woła wewnętrznie `rematch()` (przepisując `mode`), zapisuje nowe id w `rematch_match_id`. Odrzucenie czyści flagę.
+### 5. Wybór albumów do Daily/Endless
 
-**Frontend (`VersusResult`):**
-- Klik „Rewanż" → `requestRematch`. Przycisk zmienia się w „Czekam na zgodę…"
-- Przeciwnik (przez Realtime na `versus_matches`) widzi modal: „{nick} proponuje rewanż" + Przyjmij / Odrzuć
-- Akceptacja → obie strony nawigują na `/versus/$rematch_match_id`
-- Odrzucenie → modal znika, requester dostaje toast „Rewanż odrzucony"
-- W `versus/bot` rewanż zostaje natychmiastowy (bez popupu)
+- Nowa trasa `/settings/albums` z listą wszystkich albumów + checkboxami.
+- Skróty: zaznacz wszystkie / odznacz / tylko polecane.
+- Zapis w `localStorage` (`rg2-enabled-albums`); dla zalogowanych sync do `user_settings`.
+- `use-game.ts` filtruje pulę utworów po wybranych albumach; jeśli pula < 10 — toast + fallback do pełnej puli.
+- Daily zostaje globalnie deterministyczne; jeśli utwór dnia jest poza wyborem — info „dziś gramy z pełnej puli".
 
----
+### 6. NOWY TRYB: Zgadywanie po wersach (Lyric Guess)
 
-## 3. Popup changelogu
+Tryb tekstowy zamiast audio: pokazujemy fragment tekstu utworu, gracz zgaduje.
 
-Nowy wpis na początek `src/data/changelog.ts` (`2.3.0`, dzisiejsza data):
+**Gameplay:**
+- Trasa `/lyrics` + kafelek na home.
+- Runda: pokazujemy 1 wers (z bazy), 4 próby. Po każdej błędnej dorzucamy kolejny wers (max 4 wersy).
+- Pomocniczo: po 2 błędach odsłaniamy rok wydania, po 3 — pierwszą literę wykonawcy.
+- Search/guess identyczny jak w endless.
+- Codzienne wyzwanie z wersów (`/lyrics/daily`) + tryb nieskończony (`/lyrics`).
 
-- Nowy tryb **Versus 1v1** ze znajomym (link + QR, lobby, rewanż z popupem)
-- **Versus vs Bot** — 3 poziomy: Mata, Białas, Peja
-- **Versus Blitz** — szybkie rundy, 10 s na odpowiedź, max 10 s sampla
-- Dogrywka w Versus przy remisie po 5 rundzie (do max 8)
-- Statystyki Versus + nowe osiągnięcia
-- Po zgadnięciu utwór gra dalej w pełnej wersji
-- Lepsze wyszukiwanie utworów (np. „white 2115 balmain" już działa)
-- Ładniejszy share wyniku Daily
-- Lekki refresh UI/UX, poprawiona płyta winylowa w trybie ciemnym
-- Drobne poprawki bezpieczeństwa i wydajności
+**Dane:**
+- Nowa tabela `lyric_snippets`: `track_id`, `lines` (text[] — 4 wersy), `difficulty` (easy/normal/hard), `active`.
+- Link do istniejących utworów (`track_id` matchowane po `artist+title` z `src/data/songs.ts`).
+- Public SELECT dla anon na `active=true`.
 
-`CURRENT_VERSION` aktualizuje się automatycznie i popup pokaże się każdemu raz.
+**Panel admina — pełne CRUD dla wersów:**
+- Nowa zakładka **Wersy** w `/admin`:
+  - lista wszystkich snippetów (filtr po wykonawcy/tytule, status aktywny),
+  - formularz dodawania: wybór utworu (autocomplete po `songs.ts`), 4 pola tekstowe na kolejne wersy, dropdown trudności, toggle aktywne,
+  - edycja inline / usuwanie / masowe aktywuj-dezaktywuj,
+  - **import zbiorczy z JSON/CSV** (`[{artist, title, lines:[...]}]`) — przycisk „Wklej JSON" + walidacja,
+  - **auto-fetch** (opcjonalnie): przycisk „Pobierz tekst z genius.com" — server-fn `fetchLyricsFromGenius(trackId)` używająca sekretu `GENIUS_API_KEY` (poproszę userka tylko jeśli zechce użyć),
+  - podgląd jak runda wygląda dla gracza.
+- Server-fn: `listLyricSnippets`, `upsertLyricSnippet`, `deleteLyricSnippet`, `bulkImportLyricSnippets` — wszystkie z `requireSupabaseAuth` + `has_role('admin')`.
 
----
+**Statystyki:** osobny blok w `/stats` (rozegrane, średnia liczba prób, najlepsza seria).
 
-## 4. Ładny share wyniku Daily
+### 7. Lekkie odświeżenie UI/UX
 
-Aktualnie `ShareDailyModal` kopiuje suchy tekst z kwadracikami. Zmiana:
-
-- Przycisk „Udostępnij" generuje **link do `/daily?share=<id>`** (lub po prostu z fragmentem) i krótki, ludzki tekst, np.:
-  > „🎧 RAP GUESSER #142 — zgadłem **Białas — Balmain** w 2 próbach. Spróbujesz?
-  > 🟥🟢⬜⬜⬜⬜
-  > https://rapguesser.pl/daily"
-- Przegrana: „Nie zgadłem dziś (RAP GUESSER #142 — *Białas — Balmain*). A Ty spróbujesz?"
-- W modalu ładniejszy layout: hero z winylem mini, tytuł utworu, liczba prób, kafelki z kwadracikami, dwie akcje: **Skopiuj link** i **Udostępnij** (`navigator.share` na mobile, fallback = clipboard).
-- Tekst i URL nie eksponują rozwiązania w samym linku — title/artist są tylko w treści, link prowadzi po prostu do dzisiejszego daily (każdy gra ten sam track).
+- Spójniejszy header (logo / nav / zegar / online / konto).
+- Karty na home z badge „🟢 X online".
+- Drobne poprawki spacingu i hierarchii.
 
 ---
 
-## 5. UI/UX polish + winyl w dark mode
+## Szczegóły techniczne
 
-**Płyta winylowa:**
-- W `dark` `--vinyl: oklch(0.05 0.002 270)` jest niemal identyczne z `--background` (0.11) — krawędź się zlewa.
-- Zmieniam `--vinyl` w dark na ciemniejszy ale wyraźnie różny ton z lekkim chłodem (`oklch(0.18 0.01 280)`), dodaję w `Vinyl` widoczny rim (cienki ring `border` w kolorze `--ink-muted/30` lub subtelny outer glow), poprawiam gradient, żeby groove rings były bardziej widoczne (jasność `oklch(1 0 0 / 0.07)` w dark zamiast 0.04).
-- Dodaję subtelny outer drop-shadow z odrobiną primary, żeby winyl „odklejał się" od tła w obu motywach.
+**Migracje DB:**
+- `app_role` enum + `user_roles` + `has_role()` (security definer).
+- `profiles` (id=auth.uid, nick, avatar_url).
+- `user_stats` (user_id, daily jsonb, endless jsonb, versus jsonb).
+- `user_settings` (user_id, enabled_album_ids text[]).
+- `presence_pings` (player_id pk, nick, current_view, last_seen).
+- `lyric_snippets` (track_id, lines text[], difficulty, active, created_by).
+- Rozszerzenie polityk na `announcements` o INSERT/UPDATE dla admina.
+- GRANTy zgodnie z polityką; RLS wszędzie.
 
-**Lekki refresh UI/UX (przy okazji):**
-- Subtelne wyciszenie `--hairline` w light mode i lekkie wzmocnienie w dark.
-- Drobne wyrównanie spacingu w `AppHeader` (większy padding na desktop, lepsze focus state na linki nawigacji).
-- W kartach lobby Versus: spójne `rounded-3xl + shadow-soft`, hover-lift na klikalnych kafelkach.
-- W ekranie wyniku: większy trofeum + kontrast nicku vs wynik.
-- Drobne poprawki czcionki w nagłówkach (`tracking-[-0.03em]` na display, lepsza hierarchia).
+**Server functions (`src/lib/*.functions.ts`):**
+- `pingPresence`, `getActivePlayers` (public).
+- `getMyStats`, `saveMyStats`, `getMySettings`, `saveMySettings` (auth).
+- `getAnnouncements` (public), `upsertAnnouncement`, `deleteAnnouncement` (admin).
+- `getLyricSnippetForToday`, `getRandomLyricSnippet` (public).
+- `listLyricSnippets`, `upsertLyricSnippet`, `deleteLyricSnippet`, `bulkImportLyricSnippets` (admin).
 
-Bez globalnej zmiany palety — tylko polish.
+**Pliki nowe:**
+- Trasy: `routes/auth.tsx`, `routes/settings.albums.tsx`, `routes/lyrics.tsx`, `routes/lyrics.daily.tsx`.
+- Komponenty: `components/clock.tsx`, `components/active-players.tsx`, `components/admin/announcements-panel.tsx`, `components/admin/lyrics-panel.tsx`, `components/lyrics/lyrics-board.tsx`.
+- Hooki: `hooks/use-presence.ts`, `hooks/use-auth.ts`, `hooks/use-lyrics-game.ts`.
+- Lib: `lib/presence.functions.ts`, `lib/user-stats.functions.ts`, `lib/announcements.functions.ts`, `lib/lyrics.functions.ts`.
+
+**Edytowane:** `app-header.tsx`, `admin.tsx`, `settings.tsx`, `routes/index.tsx`, `use-game.ts`, `versus.index.tsx`, `changelog-popup.tsx`, `start.ts`, `changelog.ts`.
+
+**Auth:** e-mail+hasło bez confirm, Google przez `lovable.auth.signInWithOAuth("google")`. `attachSupabaseAuth` w `src/start.ts`.
 
 ---
 
-## Zmiany w plikach (skrót techniczny)
+## Kolejność wdrożenia
 
-**Migracje (jedna):**
-- `versus_matches`: dodać `mode text not null default 'classic'`, `rematch_requested_by text`, `rematch_match_id uuid`
+1. Migracja DB (wszystkie tabele + role + grants + RLS).
+2. Auth (route, hook, header).
+3. Presence + zegar + widget online.
+4. Wybór albumów + integracja z use-game.
+5. Tryb wersów (gra + admin CRUD + import + opcjonalny fetch z Genius).
+6. Panel ogłoszeń w adminie.
+7. Sync statystyk dla zalogowanych.
+8. Pass UI/UX i changelog.
 
-**Server (`src/server/versus.functions.ts`):**
-- `createMatch`: przyjmuje `mode`, dobiera 5/8 tracków
-- `submitRoundResult`: rozróżnia tryb przy decyzji o końcu meczu
-- Nowe: `requestRematch`, `respondRematch`
-- `rematch`: zachowuje `mode` z poprzedniego meczu
-
-**Hook (`src/hooks/use-versus.ts`):**
-- W typie `VersusMatch` i SELECT dodać `mode`, `rematch_requested_by`, `rematch_match_id`
-
-**Komponenty:**
-- `versus/round.tsx` — variant blitz + timer
-- `versus/bot-round.tsx` — to samo lokalnie
-- `versus/result.tsx` — flow request/respond rewanżu, dialog dla zaproszonego
-- `versus/round-timer.tsx` (nowy)
-- `versus/score-bar.tsx` — slot na timer
-- `routes/versus.index.tsx`, `routes/versus.bot.tsx` — wybór Klasyczny / Blitz w lobby
-- `components/game/share-daily-modal.tsx` — nowy layout, tytuł utworu, share link/clipboard, `navigator.share`
-- `components/game/vinyl.tsx` — wyraźny rim + lepszy gradient
-- `src/styles.css` — dark `--vinyl`, drobne hairline poprawki
-- `src/data/changelog.ts` — nowy wpis 2.3.0
+Duża zmiana — daj zielone światło i lecę. Jeśli chcesz Genius API do auto-fetchowania tekstów, dorzuć klucz, ale to opcja.
