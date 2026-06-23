@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 // Najnowszy wpis na górze. Po dodaniu nowej wersji userzy zobaczą popup raz.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.4.0",
+    date: "2026-06-23",
+    title: "Zgaduj po wersach, konta, online i wybór albumów",
+    changes: [
+      "Nowy tryb Zgaduj po wersach — pokazujemy fragment tekstu, ty zgadujesz utwór (4 próby, kolejne wersy się odkrywają)",
+      "Panel admina ma teraz zakładkę Wersy: dodawanie, edycja, podgląd, import zbiorczy z JSON",
+      "Opcjonalne logowanie — email albo Google. Bez konta dalej grasz normalnie, z kontem masz trwały nick w Versus",
+      "Widget Online w nagłówku — zobacz ilu graczy jest teraz na stronie",
+      "Aktualny zegar w nagłówku (strefa Warszawa)",
+      "Ustawienia → Wybierz albumy: zdecyduj które płyty mają być w puli Daily/Endless",
+      "Drobne poprawki UI/UX",
+    ],
+  },
+  {
     version: "2.3.0",
     date: "2026-05-04",
     title: "Versus Blitz, rewanże i lepszy share daily",
